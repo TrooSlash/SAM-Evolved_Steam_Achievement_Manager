@@ -311,7 +311,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(600, 400);
             this.Name = "GamePicker";
-            this.Text = "Steam Achievement Manager 7.0 [MODIFIED] \u2014 Game Library";
+            this.Text = "SAM Evolved \u2014 Game Library";
             this._PickerToolStrip.ResumeLayout(false);
             this._PickerToolStrip.PerformLayout();
             this._PickerStatusStrip.ResumeLayout(false);

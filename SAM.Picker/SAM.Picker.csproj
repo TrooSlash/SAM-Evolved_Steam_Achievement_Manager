@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyTitle>Steam Achievement Manager [MODIFIED] Picker</AssemblyTitle>
+    <AssemblyTitle>SAM Evolved Picker</AssemblyTitle>
     <Company>Gibbed</Company>
     <Authors>Gibbed</Authors>
-    <Description>A game picker for the Steam Achievement Manager.</Description>
+    <Description>Game library browser for SAM Evolved.</Description>
     <Copyright>Copyright © Gibbed 2019</Copyright>
   </PropertyGroup>
   <PropertyGroup>

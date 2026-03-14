@@ -53,7 +53,7 @@ namespace SAM.Game
             { "ConfirmResetStats", "Are you absolutely sure you want to reset stats?" },
             { "ConfirmResetAchievements", "Do you want to reset achievements too?" },
             { "ReallyReallySure", "Really really sure?" },
-            { "ProtectedAchievement", "Sorry, but this is a protected achievement and cannot be managed with Steam Achievement Manager." },
+            { "ProtectedAchievement", "Sorry, but this is a protected achievement and cannot be managed with SAM Evolved." },
             { "StatProtected", "Stat is protected! -- you can't modify it" },
             { "InvalidValue", "Invalid value" },
             { "StatsEditingAgreement", "I understand by modifying the values of stats, I may screw things up and can't blame anyone but myself." },

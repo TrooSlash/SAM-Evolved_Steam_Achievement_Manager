@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyTitle>Steam Achievement Manager [MODIFIED]</AssemblyTitle>
+    <AssemblyTitle>SAM Evolved</AssemblyTitle>
     <Company>Gibbed</Company>
     <Authors>Gibbed</Authors>
-    <Description>A manager for game achievements in Steam.</Description>
+    <Description>Achievement and statistics editor for SAM Evolved.</Description>
     <Copyright>Copyright © Gibbed 2019</Copyright>
   </PropertyGroup>
   <PropertyGroup>

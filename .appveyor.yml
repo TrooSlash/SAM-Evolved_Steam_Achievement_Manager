@@ -46,7 +46,7 @@ before_build:
 after_build:
   - set TZ=GMT
   - git log . > git-log.txt
-  - 7z a -r -tzip -mx=9 -x!*/LICENSE.txt SteamAchievementManager-%APPVEYOR_BUILD_VERSION%.zip ./LICENSE.txt ./git-log.txt ./upload/*.exe ./upload/*.dll
+  - 7z a -r -tzip -mx=9 -x!*/LICENSE.txt SAM-Evolved-%APPVEYOR_BUILD_VERSION%.zip ./LICENSE.txt ./git-log.txt ./upload/*.exe ./upload/*.dll
 
 artifacts:
   - path: '*-*.zip'

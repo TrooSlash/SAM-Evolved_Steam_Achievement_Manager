@@ -1,4 +1,4 @@
-# Steam Achievement Manager 7.0 [MODIFIED]
+# SAM Evolved
 
 **[EN](README.md)** | **[RU](README.ru.md)**
 
