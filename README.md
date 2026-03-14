@@ -1,5 +1,7 @@
 # Steam Achievement Manager 7.0 [MODIFIED]
 
+**[EN](README.md)** | **[RU](README.ru.md)**
+
 A heavily modified version of [Steam Achievement Manager](https://github.com/gibbed/SteamAchievementManager) by gibbed. This fork adds a modern dark UI, idle modes, localization, playtime tracking, and many quality-of-life improvements while preserving full compatibility with the original Steam API layer.
 
 [![Download Latest Release](https://img.shields.io/github/v/release/TrooSlash/SteamAchievementManager-7.0.40-MODIFIED?label=Download&style=for-the-badge)](https://github.com/TrooSlash/SteamAchievementManager-7.0.40-MODIFIED/releases/latest)
