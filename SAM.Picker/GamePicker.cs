@@ -54,6 +54,7 @@ namespace SAM.Picker
         private bool _IsListView = true;
         private int _SortColumn = 0;
         private bool _SortAscending = true;
+        private bool _SuppressItemCheck = false;
 
         public GamePicker(API.Client client)
         {
@@ -87,6 +88,8 @@ namespace SAM.Picker
             this._SmallIconImageList.Images.Add("Blank", blankSmall);
 
             this._SteamClient = client;
+
+            AppSettings.Load();
 
             this._AppDataChangedCallback = client.CreateAndRegisterCallback<API.Callbacks.AppDataChanged>();
             this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
@@ -161,6 +164,159 @@ namespace SAM.Picker
                         this._PickerStatusLabel.Text = Localization.Get("CheckingOwnershipPercent", percent)));
                 }
             }
+
+            // Supplement with locally installed games not in the XML list
+            if (this.IsHandleCreated)
+            {
+                this.BeginInvoke((Action)(() => this._PickerStatusLabel.Text = Localization.Get("ScanningLocalGames")));
+            }
+            this.ScanLocalSteamGames();
+        }
+
+        private void ScanLocalSteamGames()
+        {
+            try
+            {
+                string steamPath = API.Steam.GetInstallPath();
+                if (string.IsNullOrEmpty(steamPath)) return;
+
+                var steamappsDirs = new List<string>();
+                string mainSteamapps = Path.Combine(steamPath, "steamapps");
+                if (Directory.Exists(mainSteamapps))
+                    steamappsDirs.Add(mainSteamapps);
+
+                // Check libraryfolders.vdf for additional library paths
+                string libraryVdf = Path.Combine(mainSteamapps, "libraryfolders.vdf");
+                if (File.Exists(libraryVdf))
+                {
+                    try
+                    {
+                        string vdfContent = File.ReadAllText(libraryVdf);
+                        var pathMatches = System.Text.RegularExpressions.Regex.Matches(
+                            vdfContent, @"""path""\s+""([^""]+)""");
+                        foreach (System.Text.RegularExpressions.Match m in pathMatches)
+                        {
+                            string libPath = m.Groups[1].Value.Replace("\\\\", "\\");
+                            string libSteamapps = Path.Combine(libPath, "steamapps");
+                            if (Directory.Exists(libSteamapps) && !steamappsDirs.Contains(libSteamapps))
+                                steamappsDirs.Add(libSteamapps);
+                        }
+                    }
+                    catch { }
+                }
+
+                // Scan appmanifest files
+                foreach (var dir in steamappsDirs)
+                {
+                    try
+                    {
+                        foreach (var file in Directory.GetFiles(dir, "appmanifest_*.acf"))
+                        {
+                            string fileName = Path.GetFileNameWithoutExtension(file);
+                            string idStr = fileName.Replace("appmanifest_", "");
+                            if (uint.TryParse(idStr, out uint appId) && !this._Games.ContainsKey(appId))
+                            {
+                                this.AddGame(appId, "normal");
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // Scan localconfig.vdf for app IDs (catches uninstalled but played games)
+                try
+                {
+                    ulong steamId = this._SteamClient.SteamUser.GetSteamId();
+                    uint accountId = (uint)(steamId & 0xFFFFFFFF);
+                    string configPath = Path.Combine(steamPath, "userdata",
+                        accountId.ToString(), "config", "localconfig.vdf");
+                    if (File.Exists(configPath))
+                    {
+                        string content = File.ReadAllText(configPath);
+                        var appMatches = System.Text.RegularExpressions.Regex.Matches(
+                            content, @"""(\d+)""\s*\{[^}]*""(LastPlayed|Playtime|playtime_forever)""");
+                        foreach (System.Text.RegularExpressions.Match m in appMatches)
+                        {
+                            if (uint.TryParse(m.Groups[1].Value, out uint appId) &&
+                                appId > 0 && !this._Games.ContainsKey(appId))
+                            {
+                                this.AddGame(appId, "normal");
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                // Scan Windows Registry (HKCU\Software\Valve\Steam\Apps)
+                try
+                {
+                    using (var steamKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam\Apps"))
+                    {
+                        if (steamKey != null)
+                        {
+                            foreach (var subKeyName in steamKey.GetSubKeyNames())
+                            {
+                                if (uint.TryParse(subKeyName, out uint appId) &&
+                                    appId > 0 && !this._Games.ContainsKey(appId))
+                                {
+                                    this.AddGame(appId, "normal");
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+            catch { }
+
+            // Fetch from Steam Web API if key is configured
+            this.FetchGamesFromWebApi();
+        }
+
+        private void FetchGamesFromWebApi()
+        {
+            string apiKey = AppSettings.SteamApiKey;
+            if (string.IsNullOrWhiteSpace(apiKey)) return;
+
+            try
+            {
+                ulong steamId = this._SteamClient.SteamUser.GetSteamId();
+                string url = $"https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={apiKey}&steamid={steamId}&include_appinfo=0&include_played_free_games=1&format=json";
+
+                if (this.IsHandleCreated)
+                {
+                    this.BeginInvoke((Action)(() =>
+                        this._PickerStatusLabel.Text = Localization.Get("FetchingFromApi")));
+                }
+
+                string json;
+                using (WebClient wc = new())
+                {
+                    json = wc.DownloadString(url);
+                }
+
+                // Simple JSON parsing for appid values (no JSON library dependency)
+                var matches = System.Text.RegularExpressions.Regex.Matches(
+                    json, @"""appid""\s*:\s*(\d+)");
+                int added = 0;
+                foreach (System.Text.RegularExpressions.Match m in matches)
+                {
+                    if (uint.TryParse(m.Groups[1].Value, out uint appId) &&
+                        appId > 0 && !this._Games.ContainsKey(appId))
+                    {
+                        this.AddGame(appId, "normal");
+                        if (this._Games.ContainsKey(appId)) added++;
+                    }
+                }
+
+                if (added > 0 && this.IsHandleCreated)
+                {
+                    this.BeginInvoke((Action)(() =>
+                        this._PickerStatusLabel.Text = string.Format(
+                            Localization.Get("ApiGamesFound"), added)));
+                }
+            }
+            catch { }
         }
 
         private Dictionary<uint, AppLocalData> _PlaytimeData = new();
@@ -248,6 +404,7 @@ namespace SAM.Picker
                     this._GameListView.HeaderStyle = ColumnHeaderStyle.Clickable;
                 }
 
+                this._SuppressItemCheck = true;
                 this._GameListView.Items.Clear();
                 foreach (var game in this._FilteredGames)
                 {
@@ -260,8 +417,10 @@ namespace SAM.Picker
                     item.Tag = game;
                     item.ForeColor = DarkTheme.Text;
                     item.BackColor = DarkTheme.DarkBackground;
+                    item.Checked = game.IsChecked;
                     this._GameListView.Items.Add(item);
                 }
+                this._SuppressItemCheck = false;
 
                 // Queue icon downloads for games without icons
                 foreach (var game in this._FilteredGames)
@@ -813,6 +972,7 @@ namespace SAM.Picker
                 this._GameListView.Columns.Add(Localization.Get("ColLastPlayed"), 90, HorizontalAlignment.Center);
 
                 // Populate items
+                this._SuppressItemCheck = true;
                 this._GameListView.Items.Clear();
                 foreach (var game in this._FilteredGames)
                 {
@@ -825,8 +985,10 @@ namespace SAM.Picker
                     item.Tag = game;
                     item.ForeColor = DarkTheme.Text;
                     item.BackColor = DarkTheme.DarkBackground;
+                    item.Checked = game.IsChecked;
                     this._GameListView.Items.Add(item);
                 }
+                this._SuppressItemCheck = false;
 
                 // Queue icon downloads for games without icons
                 foreach (var game in this._FilteredGames)
@@ -857,6 +1019,8 @@ namespace SAM.Picker
 
         private void OnGameListItemCheck(object sender, ItemCheckEventArgs e)
         {
+            if (this._SuppressItemCheck) return;
+
             if (e.NewValue == CheckState.Checked)
             {
                 int checkedCount = this._GameListView.CheckedIndices.Count;
@@ -865,6 +1029,17 @@ namespace SAM.Picker
                     e.NewValue = CheckState.Unchecked;
                     MessageBox.Show(this, Localization.Get("MaxGamesWarning"),
                         Localization.Get("LimitReached"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
+            // Persist checkbox state on GameInfo model
+            if (e.Index >= 0 && e.Index < this._GameListView.Items.Count)
+            {
+                var item = this._GameListView.Items[e.Index];
+                if (item.Tag is GameInfo info)
+                {
+                    info.IsChecked = (e.NewValue == CheckState.Checked);
                 }
             }
         }
@@ -1083,8 +1258,15 @@ namespace SAM.Picker
                 {
                     bool langChanged = Localization.Current != dialog.SelectedLanguage;
                     bool viewChanged = (!_IsListView) != dialog.IsTileView;
+                    bool apiKeyChanged = AppSettings.SteamApiKey != dialog.ApiKey;
 
                     Localization.Current = dialog.SelectedLanguage;
+
+                    if (apiKeyChanged)
+                    {
+                        AppSettings.SteamApiKey = dialog.ApiKey;
+                        AppSettings.Save();
+                    }
 
                     if (viewChanged)
                     {

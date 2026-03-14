@@ -34,6 +34,7 @@ namespace SAM.Picker
         public int ImageIndex;
         public int PlaytimeMinutes;
         public long LastPlayedTimestamp;
+        public bool IsChecked;
 
         public string Name
         {
