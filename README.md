@@ -250,17 +250,25 @@ Files marked `[NEW]` were created for this modified version. All other files are
 ### Main Window -- List View
 ![Main Window - List View](screenshots/main-list.png)
 
+![Main Window - List View](screenshots/main-list.gif)
+
 ### Main Window -- Tile View
 ![Main Window - Tile View](screenshots/main-tiles.png)
 
+![Main Window - Tile View](screenshots/main-tiles.gif)
+
 ### Achievement Editor
 ![Achievement Editor](screenshots/achievements.png)
+
+![Achievement Editor](screenshots/achievements.gif)
 
 ### Idle Settings
 ![Idle Settings](screenshots/idle-settings.png)
 
 ### Active Games Manager
 ![Active Games Manager](screenshots/active-games.png)
+
+![Active Games Manager](screenshots/active-games.gif)
 
 ---
 
