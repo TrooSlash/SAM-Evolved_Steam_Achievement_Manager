@@ -91,9 +91,9 @@ namespace SAM.Picker
                 HeaderStyle = ColumnHeaderStyle.Nonclickable,
                 Font = new Font("Segoe UI", 9F)
             };
-            _GamesList.Columns.Add(Localization.Get("ColGame"), 250);
+            _GamesList.Columns.Add(Localization.Get("ColGame"), 220);
             _GamesList.Columns.Add(Localization.Get("ColAppId"), 65, HorizontalAlignment.Center);
-            _GamesList.Columns.Add(Localization.Get("ColStatus"), 80, HorizontalAlignment.Center);
+            _GamesList.Columns.Add(Localization.Get("ColStatus"), 90, HorizontalAlignment.Center);
             _GamesList.Columns.Add(Localization.Get("ColElapsed"), 80, HorizontalAlignment.Center);
             _GamesList.Columns.Add(Localization.Get("ColAction"), 100, HorizontalAlignment.Center);
             _GamesList.MouseClick += OnListClick;
@@ -305,12 +305,13 @@ namespace SAM.Picker
             if (entry == null || entry.Process == null) return;
 
             int actionColLeft = 0;
-            for (int c = 0; c < 4 && c < _GamesList.Columns.Count; c++)
+            int actionColIdx = 4;
+            for (int c = 0; c < actionColIdx && c < _GamesList.Columns.Count; c++)
                 actionColLeft += _GamesList.Columns[c].Width;
 
             if (e.X < actionColLeft) return;
 
-            int actionColMid = actionColLeft + _GamesList.Columns[4].Width / 2;
+            int actionColMid = actionColLeft + _GamesList.Columns[actionColIdx].Width / 2;
 
             if (e.X < actionColMid)
                 TogglePause(entry);

@@ -25,7 +25,7 @@ namespace SAM.Picker
             this.StartPosition = FormStartPosition.CenterParent;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.ClientSize = new Size(420, 310);
+            this.ClientSize = new Size(420, 400);
             this.BackColor = DarkTheme.DarkBackground;
             this.ForeColor = DarkTheme.Text;
             this.Font = new Font("Segoe UI", 9f);
@@ -93,19 +93,89 @@ namespace SAM.Picker
             _ApiKeyTextBox = new TextBox
             {
                 Location = new Point(15, 143),
-                Size = new Size(390, 23),
+                Size = new Size(320, 23),
                 BackColor = DarkTheme.Surface,
                 ForeColor = DarkTheme.TextBright,
                 BorderStyle = BorderStyle.FixedSingle,
                 Text = AppSettings.SteamApiKey,
                 Font = new Font("Consolas", 9f),
+                UseSystemPasswordChar = true,
+            };
+
+            var showHideButton = new Button
+            {
+                Text = "\uD83D\uDC41",
+                Location = new Point(338, 142),
+                Size = new Size(30, 25),
+                BackColor = DarkTheme.Surface,
+                ForeColor = DarkTheme.TextSecondary,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 10f),
+            };
+            showHideButton.FlatAppearance.BorderColor = DarkTheme.Border;
+            showHideButton.FlatAppearance.BorderSize = 1;
+            showHideButton.Click += (s, e) =>
+            {
+                _ApiKeyTextBox.UseSystemPasswordChar = !_ApiKeyTextBox.UseSystemPasswordChar;
+                showHideButton.ForeColor = _ApiKeyTextBox.UseSystemPasswordChar
+                    ? DarkTheme.TextSecondary
+                    : DarkTheme.Accent;
+            };
+
+            var testApiButton = new Button
+            {
+                Text = Localization.Get("TestApi"),
+                Location = new Point(372, 142),
+                Size = new Size(33, 25),
+                BackColor = DarkTheme.Toolbar,
+                ForeColor = DarkTheme.Text,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 7.5f),
+            };
+            testApiButton.FlatAppearance.BorderColor = DarkTheme.Border;
+            testApiButton.FlatAppearance.BorderSize = 1;
+            testApiButton.Click += (s, e) =>
+            {
+                string key = _ApiKeyTextBox.Text.Trim();
+                if (string.IsNullOrEmpty(key))
+                {
+                    MessageBox.Show(this, Localization.Get("ApiKeyEmpty"),
+                        Localization.Get("TestApi"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                testApiButton.Enabled = false;
+                testApiButton.Text = "...";
+                var worker = new System.ComponentModel.BackgroundWorker();
+                worker.DoWork += (ws, we) =>
+                {
+                    we.Result = SteamWebApi.GetPlayerSummary(key, 76561198006409530);
+                };
+                worker.RunWorkerCompleted += (ws, we) =>
+                {
+                    testApiButton.Enabled = true;
+                    testApiButton.Text = Localization.Get("TestApi");
+                    if (we.Error != null || we.Result == null)
+                    {
+                        testApiButton.ForeColor = Color.FromArgb(255, 100, 100);
+                        MessageBox.Show(this, Localization.Get("ApiKeyInvalid"),
+                            Localization.Get("TestApi"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    else
+                    {
+                        testApiButton.ForeColor = Color.FromArgb(100, 220, 100);
+                        MessageBox.Show(this, Localization.Get("ApiKeyValid"),
+                            Localization.Get("TestApi"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                };
+                worker.RunWorkerAsync();
             };
 
             var apiHint = new Label
             {
                 Text = Localization.Get("SteamApiKeyHint"),
                 Location = new Point(15, 170),
-                Size = new Size(390, 50),
+                Size = new Size(390, 130),
                 ForeColor = DarkTheme.TextSecondary,
                 Font = new Font("Segoe UI", 8f),
             };
@@ -113,7 +183,7 @@ namespace SAM.Picker
             var apiLink = new LinkLabel
             {
                 Text = "steamcommunity.com/dev/apikey",
-                Location = new Point(15, 220),
+                Location = new Point(15, 305),
                 Size = new Size(390, 18),
                 LinkColor = DarkTheme.Accent,
                 ActiveLinkColor = DarkTheme.AccentSecondary,
@@ -133,7 +203,7 @@ namespace SAM.Picker
             {
                 Text = Localization.Get("OK"),
                 DialogResult = DialogResult.OK,
-                Location = new Point(230, 260),
+                Location = new Point(230, 350),
                 Size = new Size(80, 30),
                 BackColor = DarkTheme.Accent,
                 ForeColor = DarkTheme.TextBright,
@@ -146,7 +216,7 @@ namespace SAM.Picker
             {
                 Text = Localization.Get("Cancel"),
                 DialogResult = DialogResult.Cancel,
-                Location = new Point(320, 260),
+                Location = new Point(320, 350),
                 Size = new Size(80, 30),
                 BackColor = DarkTheme.Toolbar,
                 ForeColor = DarkTheme.Text,
@@ -158,7 +228,7 @@ namespace SAM.Picker
             {
                 langLabel, _LanguageCombo,
                 viewLabel, _ListRadio, _TilesRadio,
-                apiLabel, _ApiKeyTextBox, apiHint, apiLink,
+                apiLabel, _ApiKeyTextBox, showHideButton, testApiButton, apiHint, apiLink,
                 okButton, cancelButton
             });
 

@@ -26,6 +26,7 @@ namespace SAM.Game
             { "Name", "Name" },
             { "Description", "Description" },
             { "UnlockTime", "Unlock Time" },
+            { "GlobalPercent", "Global %" },
             { "ShowOnly", "Show only" },
             { "Locked", "locked" },
             { "Unlocked", "unlocked" },
@@ -63,6 +64,19 @@ namespace SAM.Game
             { "Warning", "Warning" },
             { "Question", "Question" },
             { "Information", "Information" },
+
+            // VAC protection
+            { "VacDetected", "VAC / Anti-Cheat Protected" },
+            { "VacWarningText", "⚠ VAC / Anti-Cheat Protected — Editing achievements or statistics for this game may result in a VAC ban or account restrictions." },
+            { "VacBlockedEdit", "This game uses VAC / Anti-Cheat protection.\nModifying achievements or statistics is blocked to protect your account.\n\nClick \"I understand the risks\" to override at your own risk." },
+            { "VacStoreWarning", "This game uses VAC / Anti-Cheat protection!\n\nSaving changes may result in:\n• VAC ban (permanent)\n• Game ban\n• Online features restriction\n\nAre you absolutely sure you want to continue?" },
+            { "VacOverrideConfirm", "WARNING: You are about to enable editing for a VAC-protected game.\n\nThis may lead to:\n• Permanent VAC ban on your account\n• Loss of online multiplayer access\n• Game-specific bans\n\nThe developers are NOT responsible for any consequences.\n\nDo you want to proceed?" },
+            { "VacOverrideDone", "Unlocked" },
+            { "VacOverrideBtn", "I understand the risks" },
+            { "VacWarningOverridden", "⚠ VAC protection override active — You are editing at your own risk. Any consequences are your responsibility." },
+            { "VacUnlockAllWarning", "This game uses VAC / Anti-Cheat protection!\n\nUnlocking all achievements may result in:\n• Permanent VAC ban\n• Game ban\n• Loss of online features\n\nYes — Unlock all (at your own risk)\nNo — Cancel\n\nDo you want to unlock all achievements?" },
+            { "VacActionWarning", "This game uses VAC / Anti-Cheat protection.\nModifying achievements or statistics may result in a ban.\n\nAre you sure you want to continue?" },
+            { "VacClickWarning", "This game uses VAC / Anti-Cheat protection.\n\nChanging achievements may lead to a VAC ban or account restrictions.\nThis warning will only appear once per session.\n\nDo you want to edit achievements for this game?" },
         };
 
         private static readonly Dictionary<string, string> Ru = new()
@@ -76,6 +90,7 @@ namespace SAM.Game
             { "Name", "Название" },
             { "Description", "Описание" },
             { "UnlockTime", "Время разблокировки" },
+            { "GlobalPercent", "Глобальный %" },
             { "ShowOnly", "Показать только" },
             { "Locked", "закрытые" },
             { "Unlocked", "открытые" },
@@ -113,6 +128,19 @@ namespace SAM.Game
             { "Warning", "Предупреждение" },
             { "Question", "Вопрос" },
             { "Information", "Информация" },
+
+            // VAC protection
+            { "VacDetected", "VAC / Античит защита" },
+            { "VacWarningText", "⚠ VAC / Античит защита — Изменение достижений или статистики этой игры может привести к VAC-бану или ограничениям аккаунта." },
+            { "VacBlockedEdit", "Эта игра использует VAC / античит защиту.\nИзменение достижений и статистики заблокировано для защиты вашего аккаунта.\n\nНажмите «Я принимаю риски» чтобы разблокировать на свой страх и риск." },
+            { "VacStoreWarning", "Эта игра использует VAC / античит защиту!\n\nСохранение изменений может привести к:\n• VAC-бану (перманентный)\n• Бану в игре\n• Ограничению онлайн-функций\n\nВы абсолютно уверены, что хотите продолжить?" },
+            { "VacOverrideConfirm", "ВНИМАНИЕ: Вы собираетесь включить редактирование для VAC-защищённой игры.\n\nЭто может привести к:\n• Перманентному VAC-бану аккаунта\n• Потере доступа к онлайн-мультиплееру\n• Банам в конкретных играх\n\nРазработчики НЕ несут ответственности за последствия.\n\nПродолжить?" },
+            { "VacOverrideDone", "Разблокировано" },
+            { "VacOverrideBtn", "Я принимаю риски" },
+            { "VacWarningOverridden", "⚠ VAC-защита обойдена — Вы редактируете на свой страх и риск. Вся ответственность лежит на вас." },
+            { "VacUnlockAllWarning", "Эта игра использует VAC / античит защиту!\n\nРазблокировка всех достижений может привести к:\n• Перманентному VAC-бану\n• Бану в игре\n• Потере онлайн-функций\n\nДа — Разблокировать все (на свой риск)\nНет — Отмена\n\nРазблокировать все достижения?" },
+            { "VacActionWarning", "Эта игра использует VAC / античит защиту.\nИзменение достижений или статистики может привести к бану.\n\nВы уверены, что хотите продолжить?" },
+            { "VacClickWarning", "Эта игра использует VAC / античит защиту.\n\nИзменение достижений может привести к VAC-бану или ограничениям аккаунта.\nЭто предупреждение появится только один раз за сессию.\n\nХотите редактировать достижения этой игры?" },
         };
 
         public static string Get(string key)

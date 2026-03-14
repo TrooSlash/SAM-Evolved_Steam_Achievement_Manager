@@ -35,6 +35,9 @@ namespace SAM.Picker
         public int PlaytimeMinutes;
         public long LastPlayedTimestamp;
         public bool IsChecked;
+        public int AchievementsTotal;
+        public int AchievementsUnlocked;
+        public bool AchievementsLoaded;
 
         public string Name
         {

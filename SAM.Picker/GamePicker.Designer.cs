@@ -52,6 +52,7 @@
             this._GameListView = new SAM.Picker.MyListView();
             this._PickerStatusStrip = new System.Windows.Forms.StatusStrip();
             this._PickerStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this._CheckedCountLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this._DownloadStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this._LogoWorker = new System.ComponentModel.BackgroundWorker();
             this._ListWorker = new System.ComponentModel.BackgroundWorker();
@@ -255,6 +256,7 @@
             //
             this._PickerStatusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._PickerStatusLabel,
+            this._CheckedCountLabel,
             this._DownloadStatusLabel});
             this._PickerStatusStrip.Location = new System.Drawing.Point(0, 270);
             this._PickerStatusStrip.Name = "_PickerStatusStrip";
@@ -268,6 +270,13 @@
             this._PickerStatusLabel.Size = new System.Drawing.Size(727, 17);
             this._PickerStatusLabel.Spring = true;
             this._PickerStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // _CheckedCountLabel
+            //
+            this._CheckedCountLabel.Name = "_CheckedCountLabel";
+            this._CheckedCountLabel.Size = new System.Drawing.Size(70, 17);
+            this._CheckedCountLabel.Text = "\u2611 0/32";
+            this._CheckedCountLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(160)))), ((int)(((byte)(180)))));
             //
             // _DownloadStatusLabel
             //
@@ -297,6 +306,8 @@
             this.Controls.Add(this._GameListView);
             this.Controls.Add(this._PickerStatusStrip);
             this.Controls.Add(this._PickerToolStrip);
+            this._ProfilePanel = new ProfilePanel();
+            this.Controls.Add(this._ProfilePanel);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(600, 400);
             this.Name = "GamePicker";
@@ -325,6 +336,7 @@
         private System.Windows.Forms.StatusStrip _PickerStatusStrip;
         private System.Windows.Forms.ToolStripStatusLabel _DownloadStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel _PickerStatusLabel;
+        private System.Windows.Forms.ToolStripStatusLabel _CheckedCountLabel;
         private System.ComponentModel.BackgroundWorker _LogoWorker;
         private System.ComponentModel.BackgroundWorker _ListWorker;
         private System.Windows.Forms.ToolStripTextBox _SearchGameTextBox;
@@ -332,6 +344,7 @@
         private System.Windows.Forms.ToolStripButton _UnlockAllGamesButton;
         private System.Windows.Forms.ToolStripButton _IdleGamesButton;
         private System.Windows.Forms.ToolStripButton _SettingsButton;
+        private ProfilePanel _ProfilePanel;
 
         #endregion
     }

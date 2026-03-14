@@ -52,6 +52,10 @@
             this._AchievementNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementDescriptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementUnlockTimeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this._AchievementGlobalPercentColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this._VacWarningPanel = new System.Windows.Forms.Panel();
+            this._VacWarningLabel = new System.Windows.Forms.Label();
+            this._VacOverrideButton = new System.Windows.Forms.Button();
             this._AchievementsToolStrip = new System.Windows.Forms.ToolStrip();
             this._LockAllButton = new System.Windows.Forms.ToolStripButton();
             this._InvertAllButton = new System.Windows.Forms.ToolStripButton();
@@ -171,6 +175,40 @@
             this._CallbackTimer.Enabled = true;
             this._CallbackTimer.Tick += new System.EventHandler(this.OnTimer);
             // 
+            // _VacWarningPanel
+            // 
+            this._VacWarningPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(20)))), ((int)(((byte)(20)))));
+            this._VacWarningPanel.Controls.Add(this._VacWarningLabel);
+            this._VacWarningPanel.Controls.Add(this._VacOverrideButton);
+            this._VacWarningPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this._VacWarningPanel.Location = new System.Drawing.Point(0, 25);
+            this._VacWarningPanel.Name = "_VacWarningPanel";
+            this._VacWarningPanel.Padding = new System.Windows.Forms.Padding(8, 4, 8, 4);
+            this._VacWarningPanel.Size = new System.Drawing.Size(712, 56);
+            this._VacWarningPanel.Visible = false;
+            // 
+            // _VacWarningLabel
+            // 
+            this._VacWarningLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._VacWarningLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this._VacWarningLabel.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            this._VacWarningLabel.Name = "_VacWarningLabel";
+            this._VacWarningLabel.Size = new System.Drawing.Size(560, 48);
+            this._VacWarningLabel.Text = "⚠ VAC / Anti-Cheat Protected — Editing achievements or statistics may result in a ban.";
+            this._VacWarningLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // _VacOverrideButton
+            // 
+            this._VacOverrideButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
+            this._VacOverrideButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this._VacOverrideButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this._VacOverrideButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(160)))), ((int)(((byte)(160)))));
+            this._VacOverrideButton.Name = "_VacOverrideButton";
+            this._VacOverrideButton.Size = new System.Drawing.Size(130, 48);
+            this._VacOverrideButton.Text = "I understand the risks";
+            this._VacOverrideButton.UseVisualStyleBackColor = false;
+            this._VacOverrideButton.Click += new System.EventHandler(this.OnVacOverride);
+            // 
             // _MainTabControl
             // 
             this._MainTabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -205,7 +243,8 @@
             this._AchievementListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this._AchievementNameColumnHeader,
             this._AchievementDescriptionColumnHeader,
-            this._AchievementUnlockTimeColumnHeader});
+            this._AchievementUnlockTimeColumnHeader,
+            this._AchievementGlobalPercentColumnHeader});
             this._AchievementListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this._AchievementListView.ForeColor = System.Drawing.Color.White;
             this._AchievementListView.FullRowSelect = true;
@@ -240,6 +279,11 @@
             // 
             this._AchievementUnlockTimeColumnHeader.Text = "Unlock Time";
             this._AchievementUnlockTimeColumnHeader.Width = 160;
+            // 
+            // _AchievementGlobalPercentColumnHeader
+            // 
+            this._AchievementGlobalPercentColumnHeader.Text = "Global %";
+            this._AchievementGlobalPercentColumnHeader.Width = 80;
             // 
             // _AchievementsToolStrip
             // 
@@ -380,6 +424,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(712, 392);
             this.Controls.Add(this._MainToolStrip);
+            this.Controls.Add(this._VacWarningPanel);
             this.Controls.Add(this._MainTabControl);
             this.Controls.Add(this._MainStatusStrip);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -432,6 +477,10 @@
         private System.Windows.Forms.ToolStripLabel _MatchingStringLabel;
         private System.Windows.Forms.ToolStripTextBox _MatchingStringTextBox;
         private System.Windows.Forms.ColumnHeader _AchievementUnlockTimeColumnHeader;
+        private System.Windows.Forms.ColumnHeader _AchievementGlobalPercentColumnHeader;
         private System.Windows.Forms.CheckBox _EnableStatsEditingCheckBox;
+        private System.Windows.Forms.Panel _VacWarningPanel;
+        private System.Windows.Forms.Label _VacWarningLabel;
+        private System.Windows.Forms.Button _VacOverrideButton;
     }
 }

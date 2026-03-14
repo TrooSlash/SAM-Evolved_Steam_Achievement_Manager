@@ -48,6 +48,10 @@ namespace SAM.Game
 
         private readonly BindingList<Stats.StatInfo> _Statistics = new();
 
+        private Dictionary<string, float> _GlobalPercentages;
+        private bool _IsVacProtected;
+        private bool _VacClickWarned;
+
         private readonly API.Callbacks.UserStatsReceived _UserStatsReceivedCallback;
 
         //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
@@ -107,6 +111,158 @@ namespace SAM.Game
             //this.UserStatsStoredCallback = new API.Callback(1102, new API.Callback.CallbackFunction(this.OnUserStatsStored));
 
             this.RefreshStats();
+            this.FetchGlobalPercentages();
+            this.CheckVacStatus();
+        }
+
+        private void CheckVacStatus()
+        {
+            var worker = new BackgroundWorker();
+            worker.DoWork += (s, e) =>
+            {
+                try
+                {
+                    using (var client = new WebClient())
+                    {
+                        string url = string.Format(
+                            "https://store.steampowered.com/api/appdetails?appids={0}&filters=categories",
+                            this._GameId);
+                        string json = client.DownloadString(url);
+
+                        // Check for VAC category (id 8) or anti-cheat mentions
+                        bool hasVac = false;
+
+                        // Category 8 = Valve Anti-Cheat enabled
+                        var catBlocks = System.Text.RegularExpressions.Regex.Matches(
+                            json, @"\{[^{}]*""id""\s*:\s*(\d+)[^{}]*\}");
+                        foreach (System.Text.RegularExpressions.Match block in catBlocks)
+                        {
+                            if (block.Groups[1].Value == "8")
+                            {
+                                hasVac = true;
+                                break;
+                            }
+                        }
+
+                        // Also check for EAC/BattlEye in description text
+                        if (!hasVac)
+                        {
+                            string lower = json.ToLowerInvariant();
+                            if (lower.Contains("easy anti-cheat") ||
+                                lower.Contains("easyanticheat") ||
+                                lower.Contains("battleye") ||
+                                lower.Contains("anti-cheat"))
+                            {
+                                hasVac = true;
+                            }
+                        }
+
+                        e.Result = hasVac;
+                    }
+                }
+                catch
+                {
+                    e.Result = false;
+                }
+            };
+            worker.RunWorkerCompleted += (s, e) =>
+            {
+                if (e.Result is bool isVac && isVac)
+                {
+                    this._IsVacProtected = true;
+                    ShowVacWarning();
+                }
+            };
+            worker.RunWorkerAsync();
+        }
+
+        private void ShowVacWarning()
+        {
+            if (!this.IsHandleCreated) return;
+            this._VacWarningPanel.Visible = true;
+        }
+
+        private void OnVacOverride(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show(
+                this,
+                GameLocalization.Get("VacOverrideConfirm"),
+                "⚠ " + GameLocalization.Get("VacDetected"),
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                this._IsVacProtected = false;
+
+                this._VacOverrideButton.Enabled = false;
+                this._VacOverrideButton.Text = GameLocalization.Get("VacOverrideDone");
+
+                this._VacWarningLabel.Text = GameLocalization.Get("VacWarningOverridden");
+                this._VacWarningPanel.BackColor = Color.FromArgb(60, 50, 10);
+                this._VacWarningLabel.ForeColor = Color.FromArgb(255, 220, 120);
+            }
+        }
+
+        private void FetchGlobalPercentages()
+        {
+            var worker = new BackgroundWorker();
+            worker.DoWork += (s, e) =>
+            {
+                try
+                {
+                    string url = string.Format(
+                        "https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v0002/?gameid={0}",
+                        this._GameId);
+                    using (var client = new WebClient())
+                    {
+                        string json = client.DownloadString(url);
+                        var result = new Dictionary<string, float>();
+                        var blocks = System.Text.RegularExpressions.Regex.Matches(
+                            json, @"\{[^}]*""name""\s*:\s*""([^""]*)""\s*,\s*""percent""\s*:\s*""?([\d.]+)""?[^}]*\}");
+                        foreach (System.Text.RegularExpressions.Match block in blocks)
+                        {
+                            string name = block.Groups[1].Value;
+                            if (float.TryParse(block.Groups[2].Value,
+                                System.Globalization.NumberStyles.Float,
+                                CultureInfo.InvariantCulture, out float pct))
+                            {
+                                if (!result.ContainsKey(name))
+                                    result[name] = pct;
+                            }
+                        }
+                        e.Result = result;
+                    }
+                }
+                catch { e.Result = null; }
+            };
+            worker.RunWorkerCompleted += (s, e) =>
+            {
+                if (e.Result is Dictionary<string, float> data)
+                {
+                    this._GlobalPercentages = data;
+                    UpdateGlobalPercentColumn();
+                }
+            };
+            worker.RunWorkerAsync();
+        }
+
+        private void UpdateGlobalPercentColumn()
+        {
+            if (this._GlobalPercentages == null) return;
+            foreach (ListViewItem item in this._AchievementListView.Items)
+            {
+                if (item.Tag is Stats.AchievementInfo info)
+                {
+                    string pctText = "—";
+                    if (this._GlobalPercentages.TryGetValue(info.Id, out float pct))
+                    {
+                        pctText = pct.ToString("F1", CultureInfo.InvariantCulture) + "%";
+                    }
+                    if (item.SubItems.Count >= 4)
+                        item.SubItems[3].Text = pctText;
+                }
+            }
         }
 
         private void AddAchievementIcon(Stats.AchievementInfo info, Image icon)
@@ -535,6 +691,14 @@ namespace SAM.Game
                     ? info.UnlockTime.Value.ToString()
                     : "");
 
+                // Global unlock percentage
+                string pctText = "—";
+                if (this._GlobalPercentages != null && this._GlobalPercentages.TryGetValue(def.Id, out float pct))
+                {
+                    pctText = pct.ToString("F1", CultureInfo.InvariantCulture) + "%";
+                }
+                item.SubItems.Add(pctText);
+
                 info.ImageIndex = 0;
 
                 this.AddAchievementToIconQueue(info, false);
@@ -734,6 +898,8 @@ namespace SAM.Game
 
         private void OnLockAll(object sender, EventArgs e)
         {
+            if (this._IsVacProtected && !ConfirmVacAction()) return;
+
             foreach (ListViewItem item in this._AchievementListView.Items)
             {
                 if (item.Tag is Stats.AchievementInfo info && (info.Permission & 3) == 0)
@@ -744,6 +910,8 @@ namespace SAM.Game
 
         private void OnInvertAll(object sender, EventArgs e)
         {
+            if (this._IsVacProtected && !ConfirmVacAction()) return;
+
             foreach (ListViewItem item in this._AchievementListView.Items)
             {
                 if (item.Tag is Stats.AchievementInfo info && (info.Permission & 3) == 0)
@@ -754,12 +922,43 @@ namespace SAM.Game
 
         private void OnUnlockAll(object sender, EventArgs e)
         {
+            if (this._IsVacProtected)
+            {
+                var result = MessageBox.Show(
+                    this,
+                    GameLocalization.Get("VacUnlockAllWarning"),
+                    "⚠ " + GameLocalization.Get("VacDetected"),
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.Cancel)
+                    return;
+
+                if (result == DialogResult.No)
+                {
+                    // Unlock all but skip — do nothing, user declined
+                    return;
+                }
+
+                // DialogResult.Yes — user accepts risks, proceed
+            }
+
             foreach (ListViewItem item in this._AchievementListView.Items)
             {
                 if (item.Tag is Stats.AchievementInfo info && (info.Permission & 3) == 0)
                     info.IsCheckedInUI = true;
             }
             this._AchievementListView.Invalidate();
+        }
+
+        private bool ConfirmVacAction()
+        {
+            return MessageBox.Show(
+                this,
+                GameLocalization.Get("VacActionWarning"),
+                "⚠ " + GameLocalization.Get("VacDetected"),
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning) == DialogResult.Yes;
         }
 
         private bool Store()
@@ -780,6 +979,17 @@ namespace SAM.Game
 
         private void OnStore(object sender, EventArgs e)
         {
+            if (this._IsVacProtected)
+            {
+                var result = MessageBox.Show(
+                    this,
+                    GameLocalization.Get("VacStoreWarning"),
+                    "⚠ " + GameLocalization.Get("VacDetected"),
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+                if (result == DialogResult.No) return;
+            }
+
             int achievements = this.StoreAchievements();
             if (achievements < 0)
             {
@@ -833,6 +1043,14 @@ namespace SAM.Game
 
         private void OnStatAgreementChecked(object sender, EventArgs e)
         {
+            if (this._IsVacProtected && this._EnableStatsEditingCheckBox.Checked)
+            {
+                if (!ConfirmVacAction())
+                {
+                    this._EnableStatsEditingCheckBox.Checked = false;
+                    return;
+                }
+            }
             this._StatisticsDataGridView.Columns[1].ReadOnly = this._EnableStatsEditingCheckBox.Checked == false;
         }
 
@@ -911,6 +1129,18 @@ namespace SAM.Game
             if (e.X < hit.Item.Bounds.X + 22)
             {
                 if (this._IsUpdatingAchievementList) return;
+
+                if (this._IsVacProtected && !this._VacClickWarned)
+                {
+                    var result = MessageBox.Show(
+                        this,
+                        GameLocalization.Get("VacClickWarning"),
+                        "⚠ " + GameLocalization.Get("VacDetected"),
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+                    if (result == DialogResult.No) return;
+                    this._VacClickWarned = true;
+                }
 
                 if (hit.Item.Tag is Stats.AchievementInfo info)
                 {
@@ -1055,6 +1285,7 @@ namespace SAM.Game
             this._AchievementNameColumnHeader.Text = GameLocalization.Get("Name");
             this._AchievementDescriptionColumnHeader.Text = GameLocalization.Get("Description");
             this._AchievementUnlockTimeColumnHeader.Text = GameLocalization.Get("UnlockTime");
+            this._AchievementGlobalPercentColumnHeader.Text = GameLocalization.Get("GlobalPercent");
             this._DisplayLabel.Text = GameLocalization.Get("ShowOnly");
             this._DisplayLockedOnlyButton.Text = GameLocalization.Get("Locked");
             this._DisplayUnlockedOnlyButton.Text = GameLocalization.Get("Unlocked");
@@ -1064,6 +1295,8 @@ namespace SAM.Game
             this._UnlockAllButton.Text = GameLocalization.Get("UnlockAll");
             this._DownloadStatusLabel.Text = GameLocalization.Get("DownloadStatus");
             this._EnableStatsEditingCheckBox.Text = GameLocalization.Get("StatsEditingAgreement");
+            this._VacWarningLabel.Text = GameLocalization.Get("VacWarningText");
+            this._VacOverrideButton.Text = GameLocalization.Get("VacOverrideBtn");
         }
     }
 }

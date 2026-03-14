@@ -55,6 +55,8 @@ namespace SAM.Picker
         private int _SortColumn = 0;
         private bool _SortAscending = true;
         private bool _SuppressItemCheck = false;
+        private int _ActiveLogoDownloads;
+        private const int MaxParallelLogoDownloads = 6;
 
         public GamePicker(API.Client client)
         {
@@ -95,6 +97,48 @@ namespace SAM.Picker
             this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
 
             this.AddGames();
+            this.LoadProfileAsync();
+        }
+
+        private void LoadProfileAsync()
+        {
+            string apiKey = AppSettings.SteamApiKey;
+            if (string.IsNullOrWhiteSpace(apiKey)) return;
+
+            ulong steamId = this._SteamClient.SteamUser.GetSteamId();
+
+            var worker = new BackgroundWorker();
+            worker.DoWork += (s, e) =>
+            {
+                var summary = SteamWebApi.GetPlayerSummary(apiKey, steamId);
+                var level = SteamWebApi.GetSteamLevel(apiKey, steamId);
+                var badges = SteamWebApi.GetBadges(apiKey, steamId);
+                Bitmap avatar = null;
+                if (summary.HasValue && !string.IsNullOrEmpty(summary.Value.AvatarFullUrl))
+                {
+                    avatar = SteamWebApi.DownloadImage(summary.Value.AvatarFullUrl);
+                }
+                e.Result = new object[] { summary, level, badges, avatar };
+            };
+            worker.RunWorkerCompleted += (s, e) =>
+            {
+                if (e.Error != null || e.Result == null) return;
+                var results = (object[])e.Result;
+                var summary = (PlayerSummary?)results[0];
+                var level = (int?)results[1];
+                var badges = (BadgeInfo?)results[2];
+                var avatar = (Bitmap)results[3];
+
+                if (summary.HasValue && badges.HasValue)
+                {
+                    this._ProfilePanel.SetData(summary.Value, level ?? 0, badges.Value);
+                    if (avatar != null)
+                    {
+                        this._ProfilePanel.SetAvatar(avatar);
+                    }
+                }
+            };
+            worker.RunWorkerAsync();
         }
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
@@ -117,60 +161,99 @@ namespace SAM.Picker
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
-            if (this.IsHandleCreated)
-            {
-                this.BeginInvoke((Action)(() => this._PickerStatusLabel.Text = Localization.Get("DownloadingGameList")));
-            }
-
-            byte[] bytes;
-            using (WebClient downloader = new())
-            {
-                bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
-            }
-
-            List<KeyValuePair<uint, string>> pairs = new();
-            using (MemoryStream stream = new(bytes, false))
-            {
-                XPathDocument document = new(stream);
-                var navigator = document.CreateNavigator();
-                var nodes = navigator.Select("/games/game");
-                while (nodes.MoveNext() == true)
-                {
-                    string type = nodes.Current.GetAttribute("type", "");
-                    if (string.IsNullOrEmpty(type) == true)
-                    {
-                        type = "normal";
-                    }
-                    pairs.Add(new((uint)nodes.Current.ValueAsLong, type));
-                }
-            }
-
-            if (this.IsHandleCreated)
-            {
-                this.BeginInvoke((Action)(() => this._PickerStatusLabel.Text = Localization.Get("CheckingOwnership")));
-            }
-            int total = pairs.Count;
-            int processed = 0;
-            int lastPercent = -1;
-            foreach (var kv in pairs)
-            {
-                this.AddGame(kv.Key, kv.Value);
-                processed++;
-                int percent = (processed * 100) / total;
-                if (percent != lastPercent && percent % 10 == 0 && this.IsHandleCreated)
-                {
-                    lastPercent = percent;
-                    this.BeginInvoke((Action)(() =>
-                        this._PickerStatusLabel.Text = Localization.Get("CheckingOwnershipPercent", percent)));
-                }
-            }
-
-            // Supplement with locally installed games not in the XML list
+            // Phase 1: Fast local scan — show games immediately
             if (this.IsHandleCreated)
             {
                 this.BeginInvoke((Action)(() => this._PickerStatusLabel.Text = Localization.Get("ScanningLocalGames")));
             }
             this.ScanLocalSteamGames();
+
+            // Load playtime data early
+            try
+            {
+                ulong steamId = this._SteamClient.SteamUser.GetSteamId();
+                this._PlaytimeData = PlaytimeReader.Read(steamId);
+                foreach (var kv in this._PlaytimeData)
+                {
+                    if (this._Games.TryGetValue(kv.Key, out var game))
+                    {
+                        game.PlaytimeMinutes = kv.Value.PlaytimeMinutes;
+                        game.LastPlayedTimestamp = kv.Value.LastPlayedTimestamp;
+                    }
+                }
+            }
+            catch { }
+
+            // Show local games immediately while XML downloads
+            if (this._Games.Count > 0 && this.IsHandleCreated)
+            {
+                this.BeginInvoke((Action)(() =>
+                {
+                    this.RefreshGames();
+                    this.DownloadNextLogo();
+                }));
+            }
+
+            // Phase 2: Download XML for game types (network, slower)
+            if (this.IsHandleCreated)
+            {
+                this.BeginInvoke((Action)(() => this._PickerStatusLabel.Text = Localization.Get("DownloadingGameList")));
+            }
+
+            try
+            {
+                byte[] bytes;
+                using (WebClient downloader = new())
+                {
+                    bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
+                }
+
+                int newGames = 0;
+                using (MemoryStream stream = new(bytes, false))
+                {
+                    XPathDocument document = new(stream);
+                    var navigator = document.CreateNavigator();
+                    var nodes = navigator.Select("/games/game");
+                    while (nodes.MoveNext() == true)
+                    {
+                        string type = nodes.Current.GetAttribute("type", "");
+                        if (string.IsNullOrEmpty(type) == true)
+                        {
+                            type = "normal";
+                        }
+                        uint appId = (uint)nodes.Current.ValueAsLong;
+
+                        if (this._Games.TryGetValue(appId, out var existing))
+                        {
+                            // Update type for already-loaded game
+                            existing.Type = type;
+                        }
+                        else
+                        {
+                            int before = this._Games.Count;
+                            this.AddGame(appId, type);
+                            if (this._Games.Count > before) newGames++;
+                        }
+                    }
+                }
+
+                // Apply playtime to newly added games
+                if (newGames > 0 && this._PlaytimeData != null)
+                {
+                    foreach (var kv in this._PlaytimeData)
+                    {
+                        if (this._Games.TryGetValue(kv.Key, out var game))
+                        {
+                            game.PlaytimeMinutes = kv.Value.PlaytimeMinutes;
+                            game.LastPlayedTimestamp = kv.Value.LastPlayedTimestamp;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // Phase 3: Fetch additional games from Web API
+            this.FetchGamesFromWebApi();
         }
 
         private void ScanLocalSteamGames()
@@ -268,9 +351,6 @@ namespace SAM.Picker
                 catch { }
             }
             catch { }
-
-            // Fetch from Steam Web API if key is configured
-            this.FetchGamesFromWebApi();
         }
 
         private void FetchGamesFromWebApi()
@@ -331,25 +411,28 @@ namespace SAM.Picker
                     Localization.Get("Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            // Load playtime from localconfig.vdf
+            // Apply playtime to any games added during XML/API phase
             try
             {
-                ulong steamId = this._SteamClient.SteamUser.GetSteamId();
-                this._PlaytimeData = PlaytimeReader.Read(steamId);
-                foreach (var kv in this._PlaytimeData)
+                if (this._PlaytimeData != null)
                 {
-                    if (this._Games.TryGetValue(kv.Key, out var game))
+                    foreach (var kv in this._PlaytimeData)
                     {
-                        game.PlaytimeMinutes = kv.Value.PlaytimeMinutes;
-                        game.LastPlayedTimestamp = kv.Value.LastPlayedTimestamp;
+                        if (this._Games.TryGetValue(kv.Key, out var game))
+                        {
+                            game.PlaytimeMinutes = kv.Value.PlaytimeMinutes;
+                            game.LastPlayedTimestamp = kv.Value.LastPlayedTimestamp;
+                        }
                     }
                 }
             }
             catch { }
 
+            // Final refresh with correct types from XML
             this.RefreshGames();
             this._RefreshGamesButton.Enabled = true;
             this.DownloadNextLogo();
+            this.LoadAchievementsAsync();
         }
 
         private void RefreshGames()
@@ -394,6 +477,7 @@ namespace SAM.Picker
             if (this._IsListView)
             {
                 // Ensure columns exist
+                bool hasApi = !string.IsNullOrWhiteSpace(AppSettings.SteamApiKey);
                 if (this._GameListView.Columns.Count == 0)
                 {
                     this._GameListView.Columns.Add(Localization.Get("ColGame") + " \u25B2", 250);
@@ -401,6 +485,8 @@ namespace SAM.Picker
                     this._GameListView.Columns.Add(Localization.Get("ColType"), 60, HorizontalAlignment.Center);
                     this._GameListView.Columns.Add(Localization.Get("ColHours"), 75, HorizontalAlignment.Center);
                     this._GameListView.Columns.Add(Localization.Get("ColLastPlayed"), 90, HorizontalAlignment.Center);
+                    if (hasApi)
+                        this._GameListView.Columns.Add(Localization.Get("ColAchievements"), 90, HorizontalAlignment.Center);
                     this._GameListView.HeaderStyle = ColumnHeaderStyle.Clickable;
                 }
 
@@ -414,6 +500,8 @@ namespace SAM.Picker
                     item.SubItems.Add(game.Type);
                     item.SubItems.Add(PlaytimeReader.FormatPlaytime(game.PlaytimeMinutes));
                     item.SubItems.Add(PlaytimeReader.FormatLastPlayed(game.LastPlayedTimestamp));
+                    if (hasApi)
+                        item.SubItems.Add(FormatAchievements(game));
                     item.Tag = game;
                     item.ForeColor = DarkTheme.Text;
                     item.BackColor = DarkTheme.DarkBackground;
@@ -443,6 +531,102 @@ namespace SAM.Picker
             }
         }
 
+        private static string FormatAchievements(GameInfo game)
+        {
+            if (!game.AchievementsLoaded) return "\u23F3";
+            if (game.AchievementsTotal == 0) return "\u2014";
+            return $"{game.AchievementsUnlocked}/{game.AchievementsTotal}";
+        }
+
+        private void LoadAchievementsAsync()
+        {
+            string apiKey = AppSettings.SteamApiKey;
+            if (string.IsNullOrWhiteSpace(apiKey)) return;
+
+            ulong steamId = this._SteamClient.SteamUser.GetSteamId();
+            var gamesToLoad = new List<GameInfo>();
+            foreach (var game in this._Games.Values)
+            {
+                if (!game.AchievementsLoaded)
+                    gamesToLoad.Add(game);
+            }
+            if (gamesToLoad.Count == 0) return;
+
+            int total = gamesToLoad.Count;
+            int completed = 0;
+
+            var worker = new BackgroundWorker();
+            worker.DoWork += (s, e) =>
+            {
+                var semaphore = new System.Threading.SemaphoreSlim(8);
+                var tasks = new System.Collections.Generic.List<System.Threading.Tasks.Task>();
+
+                foreach (var game in gamesToLoad)
+                {
+                    semaphore.Wait();
+                    var capturedGame = game;
+                    var task = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        try
+                        {
+                            var data = SteamWebApi.GetPlayerAchievements(apiKey, steamId, capturedGame.Id);
+                            if (data.HasValue)
+                            {
+                                capturedGame.AchievementsTotal = data.Value.TotalAchievements;
+                                capturedGame.AchievementsUnlocked = data.Value.UnlockedAchievements;
+                            }
+                        }
+                        catch { }
+                        finally
+                        {
+                            capturedGame.AchievementsLoaded = true;
+                            semaphore.Release();
+                            int done = System.Threading.Interlocked.Increment(ref completed);
+                            if (done % 10 == 0 || done == total)
+                            {
+                                try
+                                {
+                                    this.BeginInvoke((Action)(() =>
+                                    {
+                                        this._PickerStatusLabel.Text = string.Format(
+                                            Localization.Get("LoadingAchievements"), done, total);
+                                        // Update visible items incrementally
+                                        UpdateAchievementColumn();
+                                    }));
+                                }
+                                catch { }
+                            }
+                        }
+                    });
+                    tasks.Add(task);
+                }
+
+                System.Threading.Tasks.Task.WaitAll(tasks.ToArray());
+            };
+            worker.RunWorkerCompleted += (s, e) =>
+            {
+                if (!this.IsHandleCreated) return;
+                UpdateAchievementColumn();
+                this._PickerStatusLabel.Text = string.Format(
+                    Localization.Get("AchievementsLoaded"), total);
+            };
+            worker.RunWorkerAsync();
+        }
+
+        private void UpdateAchievementColumn()
+        {
+            if (this._IsListView && this._GameListView.Columns.Count >= 6)
+            {
+                foreach (ListViewItem item in this._GameListView.Items)
+                {
+                    if (item.Tag is GameInfo info && info.AchievementsLoaded && item.SubItems.Count >= 6)
+                    {
+                        item.SubItems[5].Text = FormatAchievements(info);
+                    }
+                }
+            }
+        }
+
         private void SortFilteredGames()
         {
             switch (this._SortColumn)
@@ -464,6 +648,12 @@ namespace SAM.Picker
                         this._SortAscending
                             ? a.LastPlayedTimestamp.CompareTo(b.LastPlayedTimestamp)
                             : b.LastPlayedTimestamp.CompareTo(a.LastPlayedTimestamp));
+                    break;
+                case 5:
+                    this._FilteredGames.Sort((a, b) =>
+                        this._SortAscending
+                            ? a.AchievementsUnlocked.CompareTo(b.AchievementsUnlocked)
+                            : b.AchievementsUnlocked.CompareTo(a.AchievementsUnlocked));
                     break;
                 default:
                     this._FilteredGames.Sort((a, b) =>
@@ -495,6 +685,7 @@ namespace SAM.Picker
                     0 => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
                     3 => a.PlaytimeMinutes.CompareTo(b.PlaytimeMinutes),
                     4 => a.LastPlayedTimestamp.CompareTo(b.LastPlayedTimestamp),
+                    5 => a.AchievementsUnlocked.CompareTo(b.AchievementsUnlocked),
                     _ => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
                 };
 
@@ -507,7 +698,7 @@ namespace SAM.Picker
             if (!this._IsListView)
                 return;
 
-            if (e.Column != 0 && e.Column != 3 && e.Column != 4)
+            if (e.Column != 0 && e.Column != 3 && e.Column != 4 && e.Column != 5)
                 return;
 
             if (this._SortColumn == e.Column)
@@ -523,9 +714,9 @@ namespace SAM.Picker
             string[] baseNames = {
                 Localization.Get("ColGame"), Localization.Get("ColAppId"),
                 Localization.Get("ColType"), Localization.Get("ColHours"),
-                Localization.Get("ColLastPlayed")
+                Localization.Get("ColLastPlayed"), Localization.Get("ColAchievements")
             };
-            for (int i = 0; i < this._GameListView.Columns.Count; i++)
+            for (int i = 0; i < this._GameListView.Columns.Count && i < baseNames.Length; i++)
             {
                 if (i == this._SortColumn)
                 {
@@ -609,62 +800,118 @@ namespace SAM.Picker
 
         private void DoDownloadLogo(object sender, DoWorkEventArgs e)
         {
-            var info = (GameInfo)e.Argument;
-
-            lock (this._LogoLock)
-            {
-                this._LogosAttempted.Add(info.ImageUrl);
-            }
-
-            using (WebClient downloader = new())
-            {
-                try
-                {
-                    var data = downloader.DownloadData(new Uri(info.ImageUrl));
-                    using (MemoryStream stream = new(data, false))
-                    {
-                        Bitmap bitmap = new(stream);
-                        e.Result = new LogoInfo(info.Id, bitmap);
-                    }
-                }
-                catch (Exception)
-                {
-                    e.Result = new LogoInfo(info.Id, null);
-                }
-            }
+            // Legacy handler — no longer used (parallel download via Task.Run)
         }
 
         private void OnDownloadLogo(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (e.Error != null || e.Cancelled == true)
-            {
-                return;
-            }
+            // Legacy handler — no longer used (parallel download via Task.Run)
+        }
 
-            if (e.Result is LogoInfo logoInfo &&
-                logoInfo.Bitmap != null &&
-                this._Games.TryGetValue(logoInfo.Id, out var gameInfo) == true)
+        private void DownloadNextLogo()
+        {
+            lock (this._LogoLock)
+            {
+                while (this._ActiveLogoDownloads < MaxParallelLogoDownloads)
+                {
+                    GameInfo info = DequeueNextLogo();
+                    if (info == null)
+                    {
+                        if (this._ActiveLogoDownloads == 0)
+                            this._DownloadStatusLabel.Visible = false;
+                        return;
+                    }
+
+                    this._ActiveLogoDownloads++;
+                    this._LogosAttempted.Add(info.ImageUrl);
+
+                    var capturedInfo = info;
+                    System.Threading.Tasks.Task.Run(() => DownloadLogoTask(capturedInfo));
+                }
+
+                int remaining = this._ActiveLogoDownloads + this._LogoQueue.Count;
+                this._DownloadStatusLabel.Text = Localization.Get("DownloadingIcons", remaining);
+                this._DownloadStatusLabel.Visible = true;
+            }
+        }
+
+        private GameInfo DequeueNextLogo()
+        {
+            // Must be called within _LogoLock
+            while (true)
+            {
+                if (this._LogoQueue.TryDequeue(out var info) == false)
+                    return null;
+
+                if (info.Item == null && !this._IsListView)
+                    continue;
+
+                if (!this._IsListView)
+                {
+                    Rectangle itemBounds;
+                    try { itemBounds = info.Item.Bounds; }
+                    catch (ArgumentOutOfRangeException) { continue; }
+
+                    if (this._FilteredGames.Contains(info) == false ||
+                        itemBounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
+                    {
+                        this._LogosAttempting.Remove(info.ImageUrl);
+                        continue;
+                    }
+                }
+
+                return info;
+            }
+        }
+
+        private void DownloadLogoTask(GameInfo info)
+        {
+            Bitmap bitmap = null;
+            try
+            {
+                using (WebClient downloader = new())
+                {
+                    var data = downloader.DownloadData(new Uri(info.ImageUrl));
+                    using (MemoryStream stream = new(data, false))
+                    {
+                        bitmap = new Bitmap(stream);
+                    }
+                }
+            }
+            catch { }
+
+            try
+            {
+                if (this.IsHandleCreated)
+                    this.BeginInvoke((Action)(() => OnLogoDownloadComplete(info, bitmap)));
+            }
+            catch { }
+        }
+
+        private void OnLogoDownloadComplete(GameInfo info, Bitmap bitmap)
+        {
+            lock (this._LogoLock)
+                this._ActiveLogoDownloads--;
+
+            if (bitmap != null && this._Games.TryGetValue(info.Id, out var gameInfo))
             {
                 this._GameListView.BeginUpdate();
                 var imageIndex = this._LogoImageList.Images.Count;
-                this._LogoImageList.Images.Add(gameInfo.ImageUrl, logoInfo.Bitmap);
+                this._LogoImageList.Images.Add(gameInfo.ImageUrl, bitmap);
 
-                // Create 32x32 thumbnail for list view
                 Bitmap smallIcon = new(32, 32);
                 using (var g = Graphics.FromImage(smallIcon))
                 {
                     g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                    g.DrawImage(logoInfo.Bitmap, 0, 0, 32, 32);
+                    g.DrawImage(bitmap, 0, 0, 32, 32);
                 }
                 this._SmallIconImageList.Images.Add(gameInfo.ImageUrl, smallIcon);
 
-                // Dispose originals — ImageList made internal copies
-                logoInfo.Bitmap.Dispose();
+                bitmap.Dispose();
                 smallIcon.Dispose();
 
                 gameInfo.ImageIndex = imageIndex;
 
-                // Update list view item icon if in list mode
                 if (this._IsListView)
                 {
                     foreach (ListViewItem item in this._GameListView.Items)
@@ -681,54 +928,6 @@ namespace SAM.Picker
             }
 
             this.DownloadNextLogo();
-        }
-
-        private void DownloadNextLogo()
-        {
-            lock (this._LogoLock)
-            {
-
-                if (this._LogoWorker.IsBusy == true)
-                {
-                    return;
-                }
-
-                GameInfo info;
-                while (true)
-                {
-                    if (this._LogoQueue.TryDequeue(out info) == false)
-                    {
-                        this._DownloadStatusLabel.Visible = false;
-                        return;
-                    }
-
-                    if (info.Item == null && !this._IsListView)
-                    {
-                        continue;
-                    }
-
-                    if (!this._IsListView)
-                    {
-                        Rectangle itemBounds;
-                        try { itemBounds = info.Item.Bounds; }
-                        catch (ArgumentOutOfRangeException) { continue; }
-
-                        if (this._FilteredGames.Contains(info) == false ||
-                            itemBounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
-                        {
-                            this._LogosAttempting.Remove(info.ImageUrl);
-                            continue;
-                        }
-                    }
-
-                    break;
-                }
-
-                this._DownloadStatusLabel.Text = Localization.Get("DownloadingIcons", 1 + this._LogoQueue.Count);
-                this._DownloadStatusLabel.Visible = true;
-
-                this._LogoWorker.RunWorkerAsync(info);
-            }
         }
 
         private string GetGameImageUrl(uint id)
@@ -815,10 +1014,12 @@ namespace SAM.Picker
             GameInfo info = new(id, type);
             info.Name = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
 
-            // Restore cached image index if available (no new API calls)
-            if (!string.IsNullOrEmpty(info.ImageUrl))
+            // Restore cached image index if available
+            var imageUrl = GetGameImageUrl(info.Id);
+            if (!string.IsNullOrEmpty(imageUrl))
             {
-                int cachedIndex = this._LogoImageList.Images.IndexOfKey(info.ImageUrl);
+                info.ImageUrl = imageUrl;
+                int cachedIndex = this._LogoImageList.Images.IndexOfKey(imageUrl);
                 if (cachedIndex >= 0)
                 {
                     info.ImageIndex = cachedIndex;
@@ -831,12 +1032,11 @@ namespace SAM.Picker
         private void AddGames()
         {
             this._Games.Clear();
-            // Clear failed download attempts so they can be retried,
-            // but keep _LogoImageList and _SmallIconImageList intact (cached images persist)
+            // Clear in-progress attempts but keep _LogosAttempted intact
+            // so cached images in _LogoImageList are reused via AddGameToLogoQueue
             lock (this._LogoLock)
             {
                 this._LogosAttempting.Clear();
-                this._LogosAttempted.Clear();
             }
             while (this._LogoQueue.TryDequeue(out var _unused)) { }
             this._RefreshGamesButton.Enabled = false;
@@ -964,12 +1164,15 @@ namespace SAM.Picker
                 this._GameListView.HeaderStyle = ColumnHeaderStyle.Nonclickable;
 
                 // Setup columns
+                bool hasApi = !string.IsNullOrWhiteSpace(AppSettings.SteamApiKey);
                 this._GameListView.Columns.Clear();
                 this._GameListView.Columns.Add(Localization.Get("ColGame"), 250);
                 this._GameListView.Columns.Add(Localization.Get("ColAppId"), 65, HorizontalAlignment.Center);
                 this._GameListView.Columns.Add(Localization.Get("ColType"), 60, HorizontalAlignment.Center);
                 this._GameListView.Columns.Add(Localization.Get("ColHours"), 75, HorizontalAlignment.Center);
                 this._GameListView.Columns.Add(Localization.Get("ColLastPlayed"), 90, HorizontalAlignment.Center);
+                if (hasApi)
+                    this._GameListView.Columns.Add(Localization.Get("ColAchievements"), 90, HorizontalAlignment.Center);
 
                 // Populate items
                 this._SuppressItemCheck = true;
@@ -982,6 +1185,8 @@ namespace SAM.Picker
                     item.SubItems.Add(game.Type);
                     item.SubItems.Add(PlaytimeReader.FormatPlaytime(game.PlaytimeMinutes));
                     item.SubItems.Add(PlaytimeReader.FormatLastPlayed(game.LastPlayedTimestamp));
+                    if (hasApi)
+                        item.SubItems.Add(FormatAchievements(game));
                     item.Tag = game;
                     item.ForeColor = DarkTheme.Text;
                     item.BackColor = DarkTheme.DarkBackground;
@@ -1042,6 +1247,26 @@ namespace SAM.Picker
                     info.IsChecked = (e.NewValue == CheckState.Checked);
                 }
             }
+
+            // Update counter after event completes
+            this.BeginInvoke((Action)UpdateCheckedCount);
+        }
+
+        private void UpdateCheckedCount()
+        {
+            int count = 0;
+            foreach (var game in this._Games.Values)
+            {
+                if (game.IsChecked) count++;
+            }
+            this._CheckedCountLabel.Text = $"\u2611 {count}/32";
+
+            if (count == 0)
+                this._CheckedCountLabel.ForeColor = Color.FromArgb(140, 160, 180);
+            else if (count >= 32)
+                this._CheckedCountLabel.ForeColor = Color.FromArgb(255, 100, 100);
+            else
+                this._CheckedCountLabel.ForeColor = Color.FromArgb(100, 200, 130);
         }
 
         private void OnGameListViewDrawItem(object sender, DrawListViewItemEventArgs e)
@@ -1266,6 +1491,8 @@ namespace SAM.Picker
                     {
                         AppSettings.SteamApiKey = dialog.ApiKey;
                         AppSettings.Save();
+                        // Force column rebuild to add/remove achievements column
+                        this._GameListView.Columns.Clear();
                     }
 
                     if (viewChanged)
@@ -1276,6 +1503,14 @@ namespace SAM.Picker
                     if (langChanged)
                     {
                         ApplyLocalization();
+                    }
+
+                    // Refresh game list if API key changed to update columns
+                    if (apiKeyChanged && !viewChanged)
+                    {
+                        RefreshGames();
+                        if (!string.IsNullOrWhiteSpace(AppSettings.SteamApiKey))
+                            LoadAchievementsAsync();
                     }
                 }
             }
@@ -1297,14 +1532,14 @@ namespace SAM.Picker
             this._IdleGamesButton.ToolTipText = Localization.Get("IdleGamesTooltip");
             this._FilterDropDownButton.Text = Localization.Get("GameFiltering");
 
-            if (this._IsListView && this._GameListView.Columns.Count >= 5)
+            if (this._IsListView && this._GameListView.Columns.Count >= 6)
             {
                 string[] baseNames = {
                     Localization.Get("ColGame"), Localization.Get("ColAppId"),
                     Localization.Get("ColType"), Localization.Get("ColHours"),
-                    Localization.Get("ColLastPlayed")
+                    Localization.Get("ColLastPlayed"), Localization.Get("ColAchievements")
                 };
-                for (int i = 0; i < this._GameListView.Columns.Count; i++)
+                for (int i = 0; i < this._GameListView.Columns.Count && i < baseNames.Length; i++)
                 {
                     if (i == this._SortColumn)
                         this._GameListView.Columns[i].Text = baseNames[i] + (this._SortAscending ? " \u25B2" : " \u25BC");
