@@ -1509,8 +1509,42 @@ namespace SAM.Picker
                     if (apiKeyChanged && !viewChanged)
                     {
                         RefreshGames();
+                    }
+
+                    if (apiKeyChanged)
+                    {
                         if (!string.IsNullOrWhiteSpace(AppSettings.SteamApiKey))
-                            LoadAchievementsAsync();
+                        {
+                            // Load profile, fetch API games, reload achievements
+                            LoadProfileAsync();
+                            var apiWorker = new System.ComponentModel.BackgroundWorker();
+                            apiWorker.DoWork += (ws, we) => { FetchGamesFromWebApi(); };
+                            apiWorker.RunWorkerCompleted += (ws, we) =>
+                            {
+                                // Apply playtime to newly added games
+                                if (this._PlaytimeData != null)
+                                {
+                                    foreach (var kv in this._PlaytimeData)
+                                    {
+                                        if (this._Games.TryGetValue(kv.Key, out var game))
+                                        {
+                                            game.PlaytimeMinutes = kv.Value.PlaytimeMinutes;
+                                            game.LastPlayedTimestamp = kv.Value.LastPlayedTimestamp;
+                                        }
+                                    }
+                                }
+                                RefreshGames();
+                                DownloadNextLogo();
+                                LoadAchievementsAsync();
+                            };
+                            apiWorker.RunWorkerAsync();
+                        }
+                        else
+                        {
+                            // API key removed — hide profile panel
+                            this._ProfilePanel.Visible = false;
+                            RefreshGames();
+                        }
                     }
                 }
             }

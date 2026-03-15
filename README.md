@@ -308,20 +308,20 @@ Files marked `[NEW]` were created for this modified version. All other files are
 
 ## Screenshots
 
-### Main Window -- List View
-![Main Window - List View](screenshots/main-list.png)
+### Main Window -- Without API Key
+![Main Window without API](screenshots/main-no-api.png)
 
-![Main Window - List View](screenshots/main-list.gif)
+### Main Window -- With API Key
+![Main Window with API](screenshots/main-with-api.png)
 
 ### Main Window -- Tile View
 ![Main Window - Tile View](screenshots/main-tiles.png)
 
-![Main Window - Tile View](screenshots/main-tiles.gif)
-
 ### Achievement Editor
 ![Achievement Editor](screenshots/achievements.png)
 
-![Achievement Editor](screenshots/achievements.gif)
+### VAC Protection Warning
+![VAC Protection](screenshots/vac-warning.png)
 
 ### Idle Settings
 ![Idle Settings](screenshots/idle-settings.png)
@@ -329,7 +329,8 @@ Files marked `[NEW]` were created for this modified version. All other files are
 ### Active Games Manager
 ![Active Games Manager](screenshots/active-games.png)
 
-![Active Games Manager](screenshots/active-games.gif)
+### Settings
+![Settings](screenshots/settings.png)
 
 ---
 
