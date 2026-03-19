@@ -810,6 +810,9 @@ namespace SAM.Picker
 
         private void DownloadNextLogo()
         {
+            int remaining = 0;
+            bool hideStatus = false;
+
             lock (this._LogoLock)
             {
                 while (this._ActiveLogoDownloads < MaxParallelLogoDownloads)
@@ -818,8 +821,8 @@ namespace SAM.Picker
                     if (info == null)
                     {
                         if (this._ActiveLogoDownloads == 0)
-                            this._DownloadStatusLabel.Visible = false;
-                        return;
+                            hideStatus = true;
+                        break;
                     }
 
                     this._ActiveLogoDownloads++;
@@ -829,7 +832,16 @@ namespace SAM.Picker
                     System.Threading.Tasks.Task.Run(() => DownloadLogoTask(capturedInfo));
                 }
 
-                int remaining = this._ActiveLogoDownloads + this._LogoQueue.Count;
+                remaining = this._ActiveLogoDownloads + this._LogoQueue.Count;
+            }
+
+            // UI operations outside lock to prevent potential deadlock
+            if (hideStatus)
+            {
+                this._DownloadStatusLabel.Visible = false;
+            }
+            else if (remaining > 0)
+            {
                 this._DownloadStatusLabel.Text = Localization.Get("DownloadingIcons", remaining);
                 this._DownloadStatusLabel.Visible = true;
             }
@@ -1283,6 +1295,12 @@ namespace SAM.Picker
         private void OnGameListViewDrawItem(object sender, DrawListViewItemEventArgs e)
         {
             if (!e.Item.Bounds.IntersectsWith(this._GameListView.ClientRectangle))
+            {
+                return;
+            }
+
+            // Bounds check to prevent IndexOutOfRangeException during rapid scrolling/filtering
+            if (e.ItemIndex < 0 || e.ItemIndex >= this._FilteredGames.Count)
             {
                 return;
             }
