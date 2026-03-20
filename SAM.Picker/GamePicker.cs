@@ -554,6 +554,7 @@ namespace SAM.Picker
 
             int total = gamesToLoad.Count;
             int completed = 0;
+            bool cancelled = false;
 
             var worker = new BackgroundWorker();
             worker.DoWork += (s, e) =>
@@ -563,12 +564,23 @@ namespace SAM.Picker
 
                 foreach (var game in gamesToLoad)
                 {
+                    // Check if API key was removed during loading
+                    if (string.IsNullOrWhiteSpace(AppSettings.SteamApiKey))
+                    {
+                        cancelled = true;
+                        break;
+                    }
+
                     semaphore.Wait();
                     var capturedGame = game;
                     var task = System.Threading.Tasks.Task.Run(() =>
                     {
                         try
                         {
+                            // Double-check API key is still valid
+                            if (string.IsNullOrWhiteSpace(AppSettings.SteamApiKey))
+                                return;
+
                             var data = SteamWebApi.GetPlayerAchievements(apiKey, steamId, capturedGame.Id);
                             if (data.HasValue)
                             {
@@ -582,7 +594,9 @@ namespace SAM.Picker
                             capturedGame.AchievementsLoaded = true;
                             semaphore.Release();
                             int done = System.Threading.Interlocked.Increment(ref completed);
-                            if (done % 10 == 0 || done == total)
+
+                            // Only update UI if API key is still valid
+                            if (!string.IsNullOrWhiteSpace(AppSettings.SteamApiKey) && (done % 10 == 0 || done == total))
                             {
                                 try
                                 {
@@ -606,9 +620,18 @@ namespace SAM.Picker
             worker.RunWorkerCompleted += (s, e) =>
             {
                 if (!this.IsHandleCreated) return;
-                UpdateAchievementColumn();
-                this._PickerStatusLabel.Text = string.Format(
-                    Localization.Get("AchievementsLoaded"), total);
+
+                // Only show completion message if API key is still valid and not cancelled
+                if (!cancelled && !string.IsNullOrWhiteSpace(AppSettings.SteamApiKey))
+                {
+                    UpdateAchievementColumn();
+                    this._PickerStatusLabel.Text = string.Format(
+                        Localization.Get("AchievementsLoaded"), total);
+                }
+                else
+                {
+                    this._PickerStatusLabel.Text = "";
+                }
             };
             worker.RunWorkerAsync();
         }
@@ -1570,8 +1593,9 @@ namespace SAM.Picker
                         }
                         else
                         {
-                            // API key removed — hide profile panel
+                            // API key removed — hide profile panel and clear status
                             this._ProfilePanel.Visible = false;
+                            this._PickerStatusLabel.Text = "";
                             RefreshGames();
                         }
                     }
