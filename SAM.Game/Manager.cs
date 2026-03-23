@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -29,6 +29,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Windows.Forms;
+using Serilog;
 using static SAM.Game.InvariantShorthand;
 using APITypes = SAM.API.Types;
 
@@ -105,6 +106,8 @@ namespace SAM.Game
                 base.Text += " | " + this._GameId.ToString(CultureInfo.InvariantCulture);
             }
 
+            Log.Information("Manager created for AppId {AppId}, game name: {GameName}", this._GameId, name ?? "(unknown)");
+
             this._UserStatsReceivedCallback = client.CreateAndRegisterCallback<API.Callbacks.UserStatsReceived>();
             this._UserStatsReceivedCallback.OnRun += this.OnUserStatsReceived;
 
@@ -157,11 +160,13 @@ namespace SAM.Game
                             }
                         }
 
+                        Log.Information("VAC status check for AppId {AppId}: {IsVacProtected}", this._GameId, hasVac);
                         e.Result = hasVac;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Log.Warning(ex, "Failed to check VAC status for AppId {AppId}", this._GameId);
                     e.Result = false;
                 }
             };
@@ -184,6 +189,7 @@ namespace SAM.Game
 
         private void OnVacOverride(object sender, EventArgs e)
         {
+            Log.Information("User clicked VAC Override for AppId {AppId}", this._GameId);
             var result = MessageBox.Show(
                 this,
                 GameLocalization.Get("VacOverrideConfirm"),
@@ -234,7 +240,11 @@ namespace SAM.Game
                         e.Result = result;
                     }
                 }
-                catch { e.Result = null; }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "Failed to fetch global achievement percentages for AppId {AppId}", this._GameId);
+                    e.Result = null;
+                }
             };
             worker.RunWorkerCompleted += (s, e) =>
             {
@@ -291,13 +301,18 @@ namespace SAM.Game
                     MemoryStream stream = new(e.Result, false);
                     bitmap = new(stream);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Log.Debug(ex, "Failed to decode icon bitmap for achievement");
                     bitmap = null;
                 }
 
                 this.AddAchievementIcon(info, bitmap);
                 this._AchievementListView.Update();
+            }
+            else if (e.Error != null)
+            {
+                Log.Debug(e.Error, "Icon download failed");
             }
 
             this.DownloadNextIcon();
@@ -370,17 +385,20 @@ namespace SAM.Game
                 path = Path.Combine(path, "appcache", "stats", fileName);
                 if (File.Exists(path) == false)
                 {
+                    Log.Warning("User game stats schema file not found at {Path} for AppId {AppId}", path, this._GameId);
                     return false;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Log.Warning(ex, "Failed to locate user game stats schema for AppId {AppId}", this._GameId);
                 return false;
             }
 
             var kv = KeyValue.LoadAsBinary(path);
             if (kv == null)
             {
+                Log.Warning("Failed to parse user game stats schema from {Path} for AppId {AppId}", path, this._GameId);
                 return false;
             }
 
@@ -392,6 +410,7 @@ namespace SAM.Game
             var stats = kv[this._GameId.ToString(CultureInfo.InvariantCulture)]["stats"];
             if (stats.Valid == false || stats.Children == null)
             {
+                Log.Warning("Stats node is invalid or has no children in schema for AppId {AppId}", this._GameId);
                 return false;
             }
 
@@ -526,6 +545,7 @@ namespace SAM.Game
         {
             if (param.Result != 1)
             {
+                Log.Error("Failed to receive user stats for AppId {AppId}, result code: {ResultCode}", this._GameId, param.Result);
                 this._GameStatusLabel.Text = GameLocalization.Get("ErrorRetrievingStats", TranslateError(param.Result));
                 this.EnableInput();
                 return;
@@ -533,6 +553,7 @@ namespace SAM.Game
 
             if (this.LoadUserGameStatsSchema() == false)
             {
+                Log.Warning("Failed to load user game stats schema for AppId {AppId}", this._GameId);
                 this._GameStatusLabel.Text = GameLocalization.Get("FailedLoadSchema");
                 this.EnableInput();
                 return;
@@ -544,6 +565,7 @@ namespace SAM.Game
             }
             catch (Exception e)
             {
+                Log.Error(e, "Error retrieving achievements for AppId {AppId}", this._GameId);
                 this._GameStatusLabel.Text = GameLocalization.Get("ErrorAchievementsRetrieval");
                 this.EnableInput();
                 MessageBox.Show(
@@ -560,6 +582,7 @@ namespace SAM.Game
             }
             catch (Exception e)
             {
+                Log.Error(e, "Error retrieving statistics for AppId {AppId}", this._GameId);
                 this._GameStatusLabel.Text = GameLocalization.Get("ErrorStatsRetrieval");
                 this.EnableInput();
                 MessageBox.Show(
@@ -578,6 +601,9 @@ namespace SAM.Game
             {
                 this._MainTabControl.TabPages.Add(this._StatisticsTabPage);
             }
+
+            Log.Information("Successfully received user stats for AppId {AppId}: {AchievementCount} achievements, {StatCount} statistics",
+                this._GameId, this._AchievementListView.Items.Count, this._StatisticsDataGridView.Rows.Count);
 
             this._GameStatusLabel.Text = GameLocalization.Get("RetrievedStats", this._AchievementListView.Items.Count, this._StatisticsDataGridView.Rows.Count);
             this.EnableInput();
@@ -805,6 +831,7 @@ namespace SAM.Game
             {
                 if (this._SteamClient.SteamUserStats.SetAchievement(info.Id, info.IsAchieved) == false)
                 {
+                    Log.Error("Failed to set achievement {AchievementId} to {IsAchieved} for AppId {AppId}", info.Id, info.IsAchieved, this._GameId);
                     MessageBox.Show(
                         this,
                         GameLocalization.Get("ErrorSettingState", info.Id),
@@ -815,6 +842,7 @@ namespace SAM.Game
                 }
             }
 
+            Log.Information("Storing {AchievementCount} achievement change(s) for AppId {AppId}", achievements.Count, this._GameId);
             return achievements.Count;
         }
 
@@ -839,6 +867,7 @@ namespace SAM.Game
                         intStat.Id,
                         intStat.IntValue) == false)
                     {
+                        Log.Error("Failed to set integer stat {StatId} for AppId {AppId}", stat.Id, this._GameId);
                         MessageBox.Show(
                             this,
                             GameLocalization.Get("ErrorSettingValue", stat.Id),
@@ -854,6 +883,7 @@ namespace SAM.Game
                         floatStat.Id,
                         floatStat.FloatValue) == false)
                     {
+                        Log.Error("Failed to set float stat {StatId} for AppId {AppId}", stat.Id, this._GameId);
                         MessageBox.Show(
                             this,
                             GameLocalization.Get("ErrorSettingValue", stat.Id),
@@ -869,6 +899,7 @@ namespace SAM.Game
                 }
             }
 
+            Log.Information("Storing {StatCount} statistic change(s) for AppId {AppId}", statistics.Count, this._GameId);
             return statistics.Count;
         }
 
@@ -893,11 +924,13 @@ namespace SAM.Game
 
         private void OnRefresh(object sender, EventArgs e)
         {
+            Log.Information("User clicked Refresh for AppId {AppId}", this._GameId);
             this.RefreshStats();
         }
 
         private void OnLockAll(object sender, EventArgs e)
         {
+            Log.Information("User clicked Lock All for AppId {AppId}", this._GameId);
             if (this._IsVacProtected && !ConfirmVacAction()) return;
 
             foreach (ListViewItem item in this._AchievementListView.Items)
@@ -910,6 +943,7 @@ namespace SAM.Game
 
         private void OnInvertAll(object sender, EventArgs e)
         {
+            Log.Information("User clicked Invert All for AppId {AppId}", this._GameId);
             if (this._IsVacProtected && !ConfirmVacAction()) return;
 
             foreach (ListViewItem item in this._AchievementListView.Items)
@@ -922,6 +956,7 @@ namespace SAM.Game
 
         private void OnUnlockAll(object sender, EventArgs e)
         {
+            Log.Information("User clicked Unlock All for AppId {AppId}", this._GameId);
             if (this._IsVacProtected)
             {
                 var result = MessageBox.Show(
@@ -965,6 +1000,7 @@ namespace SAM.Game
         {
             if (this._SteamClient.SteamUserStats.StoreStats() == false)
             {
+                Log.Error("StoreStats call failed for AppId {AppId}", this._GameId);
                 MessageBox.Show(
                     this,
                     GameLocalization.Get("ErrorStoring"),
@@ -974,11 +1010,13 @@ namespace SAM.Game
                 return false;
             }
 
+            Log.Information("StoreStats succeeded for AppId {AppId}", this._GameId);
             return true;
         }
 
         private void OnStore(object sender, EventArgs e)
         {
+            Log.Information("User clicked Store for AppId {AppId}", this._GameId);
             if (this._IsVacProtected)
             {
                 var result = MessageBox.Show(
@@ -1043,6 +1081,7 @@ namespace SAM.Game
 
         private void OnStatAgreementChecked(object sender, EventArgs e)
         {
+            Log.Information("User toggled stats editing: {Enabled} for AppId {AppId}", this._EnableStatsEditingCheckBox.Checked, this._GameId);
             if (this._IsVacProtected && this._EnableStatsEditingCheckBox.Checked)
             {
                 if (!ConfirmVacAction())
@@ -1086,6 +1125,8 @@ namespace SAM.Game
                 return;
             }
 
+            Log.Warning("Resetting all stats for AppId {AppId}, includeAchievements: {IncludeAchievements}", this._GameId, achievementsToo);
+
             if (this._SteamClient.SteamUserStats.ResetAllStats(achievementsToo) == false)
             {
                 MessageBox.Show(this, "Failed.", GameLocalization.Get("Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1097,6 +1138,7 @@ namespace SAM.Game
 
         private void OnDisplayUncheckedOnly(object sender, EventArgs e)
         {
+            Log.Debug("User toggled filter: show unlocked only");
             if ((sender as ToolStripButton).Checked == true)
             {
                 this._DisplayLockedOnlyButton.Checked = false;
@@ -1107,6 +1149,7 @@ namespace SAM.Game
 
         private void OnDisplayCheckedOnly(object sender, EventArgs e)
         {
+            Log.Debug("User toggled filter: show locked only");
             if ((sender as ToolStripButton).Checked == true)
             {
                 this._DisplayUnlockedOnlyButton.Checked = false;
@@ -1117,6 +1160,7 @@ namespace SAM.Game
 
         private void OnFilterUpdate(object sender, KeyEventArgs e)
         {
+            Log.Debug("Achievement filter updated");
             this.GetAchievements();
         }
 
@@ -1156,6 +1200,7 @@ namespace SAM.Game
                     }
 
                     info.IsCheckedInUI = !info.IsCheckedInUI;
+                    Log.Debug("Achievement toggled: {Name} -> {State}", info.Id, info.IsCheckedInUI ? "unlocked" : "locked");
                     this._AchievementListView.Invalidate();
                 }
             }

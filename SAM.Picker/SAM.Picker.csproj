@@ -7,9 +7,9 @@
     <Copyright>Copyright © Gibbed 2019</Copyright>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>1.0.1</Version>
-    <AssemblyVersion>1.0.1.0</AssemblyVersion>
-    <FileVersion>1.0.1.0</FileVersion>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>SAM.ico</ApplicationIcon>
@@ -39,6 +39,8 @@
     <Reference Include="System.Security" />
     <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="MyListView.cs">

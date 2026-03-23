@@ -32,6 +32,7 @@ using System.Linq;
 using System.Net;
 using System.Windows.Forms;
 using System.Xml.XPath;
+using Serilog;
 using static SAM.Picker.InvariantShorthand;
 using APITypes = SAM.API.Types;
 
@@ -93,6 +94,10 @@ namespace SAM.Picker
 
             AppSettings.Load();
 
+            string apiKey = AppSettings.SteamApiKey;
+            Log.Information("GamePicker initialized. Steam API key is {ApiKeyStatus}",
+                string.IsNullOrWhiteSpace(apiKey) ? "not configured" : "configured");
+
             this._AppDataChangedCallback = client.CreateAndRegisterCallback<API.Callbacks.AppDataChanged>();
             this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
 
@@ -103,7 +108,13 @@ namespace SAM.Picker
         private void LoadProfileAsync()
         {
             string apiKey = AppSettings.SteamApiKey;
-            if (string.IsNullOrWhiteSpace(apiKey)) return;
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                Log.Information("LoadProfileAsync skipped: no API key configured");
+                return;
+            }
+
+            Log.Information("LoadProfileAsync started");
 
             ulong steamId = this._SteamClient.SteamUser.GetSteamId();
 
@@ -122,7 +133,11 @@ namespace SAM.Picker
             };
             worker.RunWorkerCompleted += (s, e) =>
             {
-                if (e.Error != null || e.Result == null) return;
+                if (e.Error != null || e.Result == null)
+                {
+                    Log.Warning("LoadProfileAsync completed with error or null result. Error: {Error}", e.Error?.Message);
+                    return;
+                }
                 var results = (object[])e.Result;
                 var summary = (PlayerSummary?)results[0];
                 var level = (int?)results[1];
@@ -136,6 +151,11 @@ namespace SAM.Picker
                     {
                         this._ProfilePanel.SetAvatar(avatar);
                     }
+                    Log.Information("LoadProfileAsync completed successfully for player {PlayerName}", summary.Value.PersonaName);
+                }
+                else
+                {
+                    Log.Warning("LoadProfileAsync completed but summary or badges data was missing");
                 }
             };
             worker.RunWorkerAsync();
@@ -161,12 +181,16 @@ namespace SAM.Picker
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
+            var stopwatch = Stopwatch.StartNew();
+
             // Phase 1: Fast local scan — show games immediately
+            Log.Information("DoDownloadList Phase 1: scanning local Steam games");
             if (this.IsHandleCreated)
             {
                 this.BeginInvoke((Action)(() => this._PickerStatusLabel.Text = Localization.Get("ScanningLocalGames")));
             }
             this.ScanLocalSteamGames();
+            Log.Information("DoDownloadList Phase 1 complete: {GameCount} games found locally", this._Games.Count);
 
             // Load playtime data early
             try
@@ -182,7 +206,10 @@ namespace SAM.Picker
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to load playtime data");
+            }
 
             // Show local games immediately while XML downloads
             if (this._Games.Count > 0 && this.IsHandleCreated)
@@ -195,6 +222,7 @@ namespace SAM.Picker
             }
 
             // Phase 2: Download XML for game types (network, slower)
+            Log.Information("DoDownloadList Phase 2: downloading game list XML");
             if (this.IsHandleCreated)
             {
                 this.BeginInvoke((Action)(() => this._PickerStatusLabel.Text = Localization.Get("DownloadingGameList")));
@@ -237,6 +265,8 @@ namespace SAM.Picker
                     }
                 }
 
+                Log.Information("DoDownloadList Phase 2 complete: {NewGames} new games from XML, {TotalGames} total", newGames, this._Games.Count);
+
                 // Apply playtime to newly added games
                 if (newGames > 0 && this._PlaytimeData != null)
                 {
@@ -250,10 +280,18 @@ namespace SAM.Picker
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to download game list XML");
+            }
 
             // Phase 3: Fetch additional games from Web API
+            Log.Information("DoDownloadList Phase 3: fetching games from Steam Web API");
             this.FetchGamesFromWebApi();
+
+            stopwatch.Stop();
+            Log.Information("DoDownloadList completed. Total games: {TotalGames}, elapsed: {ElapsedMs} ms",
+                this._Games.Count, stopwatch.ElapsedMilliseconds);
         }
 
         private void ScanLocalSteamGames()
@@ -285,7 +323,10 @@ namespace SAM.Picker
                                 steamappsDirs.Add(libSteamapps);
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Failed to parse libraryfolders.vdf");
+                    }
                 }
 
                 // Scan appmanifest files
@@ -303,7 +344,10 @@ namespace SAM.Picker
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Failed to scan appmanifest files in {Directory}", dir);
+                    }
                 }
 
                 // Scan localconfig.vdf for app IDs (catches uninstalled but played games)
@@ -328,7 +372,10 @@ namespace SAM.Picker
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to scan localconfig.vdf for app IDs");
+                }
 
                 // Scan Windows Registry (HKCU\Software\Valve\Steam\Apps)
                 try
@@ -348,15 +395,29 @@ namespace SAM.Picker
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to scan Windows Registry for Steam app IDs");
+                }
+
+                Log.Information("ScanLocalSteamGames found {GameCount} games", this._Games.Count);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "ScanLocalSteamGames failed with unexpected error");
+            }
         }
 
         private void FetchGamesFromWebApi()
         {
             string apiKey = AppSettings.SteamApiKey;
-            if (string.IsNullOrWhiteSpace(apiKey)) return;
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                Log.Information("FetchGamesFromWebApi skipped: no API key configured");
+                return;
+            }
+
+            Log.Information("FetchGamesFromWebApi started");
 
             try
             {
@@ -389,6 +450,8 @@ namespace SAM.Picker
                     }
                 }
 
+                Log.Information("FetchGamesFromWebApi completed: {AddedCount} new games added from Web API", added);
+
                 if (added > 0 && this.IsHandleCreated)
                 {
                     this.BeginInvoke((Action)(() =>
@@ -396,7 +459,10 @@ namespace SAM.Picker
                             Localization.Get("ApiGamesFound"), added)));
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "FetchGamesFromWebApi failed");
+            }
         }
 
         private Dictionary<uint, AppLocalData> _PlaytimeData = new();
@@ -405,6 +471,7 @@ namespace SAM.Picker
         {
             if (e.Error != null || e.Cancelled == true)
             {
+                Log.Error(e.Error, "OnDownloadList completed with error or was cancelled");
                 this.AddDefaultGames();
                 MessageBox.Show(
                     e.Error?.ToString() ?? Localization.Get("DownloadCancelled"),
@@ -426,7 +493,12 @@ namespace SAM.Picker
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to apply playtime data in OnDownloadList");
+            }
+
+            Log.Information("OnDownloadList completed. Total game count: {TotalGames}", this._Games.Count);
 
             // Final refresh with correct types from XML
             this.RefreshGames();
@@ -541,7 +613,11 @@ namespace SAM.Picker
         private void LoadAchievementsAsync()
         {
             string apiKey = AppSettings.SteamApiKey;
-            if (string.IsNullOrWhiteSpace(apiKey)) return;
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                Log.Information("LoadAchievementsAsync skipped: no API key configured");
+                return;
+            }
 
             ulong steamId = this._SteamClient.SteamUser.GetSteamId();
             var gamesToLoad = new List<GameInfo>();
@@ -555,6 +631,8 @@ namespace SAM.Picker
             int total = gamesToLoad.Count;
             int completed = 0;
             bool cancelled = false;
+
+            Log.Information("LoadAchievementsAsync started for {TotalGames} games", total);
 
             var worker = new BackgroundWorker();
             worker.DoWork += (s, e) =>
@@ -587,13 +665,23 @@ namespace SAM.Picker
                                 capturedGame.AchievementsTotal = data.Value.TotalAchievements;
                                 capturedGame.AchievementsUnlocked = data.Value.UnlockedAchievements;
                             }
+                            Log.Debug("Loaded achievements for appId {AppId}: {Unlocked}/{Total}",
+                                capturedGame.Id, capturedGame.AchievementsUnlocked, capturedGame.AchievementsTotal);
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "Failed to load achievements for appId {AppId}", capturedGame.Id);
+                        }
                         finally
                         {
                             capturedGame.AchievementsLoaded = true;
                             semaphore.Release();
                             int done = System.Threading.Interlocked.Increment(ref completed);
+
+                            if (done % 50 == 0)
+                            {
+                                Log.Debug("LoadAchievementsAsync progress: {Done}/{Total}", done, total);
+                            }
 
                             // Only update UI if API key is still valid
                             if (!string.IsNullOrWhiteSpace(AppSettings.SteamApiKey) && (done % 10 == 0 || done == total))
@@ -608,7 +696,10 @@ namespace SAM.Picker
                                         UpdateAchievementColumn();
                                     }));
                                 }
-                                catch { }
+                                catch (Exception ex)
+                                {
+                                    Log.Warning(ex, "Failed to update UI during achievement loading progress");
+                                }
                             }
                         }
                     });
@@ -627,10 +718,12 @@ namespace SAM.Picker
                     UpdateAchievementColumn();
                     this._PickerStatusLabel.Text = string.Format(
                         Localization.Get("AchievementsLoaded"), total);
+                    Log.Information("LoadAchievementsAsync completed for {TotalGames} games", total);
                 }
                 else
                 {
                     this._PickerStatusLabel.Text = "";
+                    Log.Information("LoadAchievementsAsync ended (cancelled={Cancelled})", cancelled);
                 }
             };
             worker.RunWorkerAsync();
@@ -724,6 +817,8 @@ namespace SAM.Picker
             if (e.Column != 0 && e.Column != 3 && e.Column != 4 && e.Column != 5)
                 return;
 
+            Log.Debug("Column sort clicked: column={Column}, ascending={Ascending}", e.Column, this._SortAscending);
+
             if (this._SortColumn == e.Column)
             {
                 this._SortAscending = !this._SortAscending;
@@ -768,7 +863,7 @@ namespace SAM.Picker
                 Text = info.Name,
                 ImageIndex = info.ImageIndex,
             };
-        
+
         }
 
         private void OnGameListViewSearchForVirtualItem(object sender, SearchForVirtualItemEventArgs e)
@@ -913,14 +1008,20 @@ namespace SAM.Picker
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "Failed to download logo for appId {AppId} from {Url}", info.Id, info.ImageUrl);
+            }
 
             try
             {
                 if (this.IsHandleCreated)
                     this.BeginInvoke((Action)(() => OnLogoDownloadComplete(info, bitmap)));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to invoke OnLogoDownloadComplete for appId {AppId}", info.Id);
+            }
         }
 
         private void OnLogoDownloadComplete(GameInfo info, Bitmap bitmap)
@@ -1120,13 +1221,16 @@ namespace SAM.Picker
 
             if (info == null) return;
 
+            Log.Information("Launching SAM.Game for appId {AppId} ({GameName})", info.Id, info.Name);
+
             try
             {
                 Environment.SetEnvironmentVariable("SAM_LANGUAGE", Localization.Current == Localization.Language.Russian ? "Russian" : "English");
                 Process.Start("SAM.Game.exe", info.Id.ToString(CultureInfo.InvariantCulture));
             }
-            catch (Win32Exception)
+            catch (Win32Exception ex)
             {
+                Log.Error(ex, "Failed to start SAM.Game.exe for appId {AppId}", info.Id);
                 MessageBox.Show(
                     this,
                     Localization.Get("FailedToStartSAMGame"),
@@ -1138,12 +1242,14 @@ namespace SAM.Picker
 
         private void OnRefresh(object sender, EventArgs e)
         {
+            Log.Information("User clicked Refresh");
             this._AddGameTextBox.Text = "";
             this.AddGames();
         }
 
         private void OnAddGame(object sender, EventArgs e)
         {
+            Log.Information("User clicked Add Game, input: {Input}", this._AddGameTextBox.Text);
             uint id;
 
             if (uint.TryParse(this._AddGameTextBox.Text, out id) == false)
@@ -1182,6 +1288,7 @@ namespace SAM.Picker
 
         private void OnFilterUpdate(object sender, EventArgs e)
         {
+            Log.Debug("Filter updated: {Filter}", this._SearchGameTextBox.Text);
             this.RefreshGames();
 
             // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on KeyUp)
@@ -1191,6 +1298,7 @@ namespace SAM.Picker
         private void OnToggleView(object sender, EventArgs e)
         {
             _IsListView = !_IsListView;
+            Log.Information("User toggled view to {View}", _IsListView ? "List" : "Tile");
 
             this._GameListView.BeginUpdate();
 
@@ -1271,6 +1379,8 @@ namespace SAM.Picker
         private void OnGameListItemCheck(object sender, ItemCheckEventArgs e)
         {
             if (this._SuppressItemCheck) return;
+            if (e.Index >= 0 && e.Index < this._GameListView.Items.Count && this._GameListView.Items[e.Index].Tag is GameInfo gi)
+                Log.Debug("Game checkbox {Action}: {Name} (AppId={AppId})", e.NewValue == CheckState.Checked ? "checked" : "unchecked", gi.Name, gi.Id);
 
             if (e.NewValue == CheckState.Checked)
             {
@@ -1415,6 +1525,8 @@ namespace SAM.Picker
                 return;
             }
 
+            Log.Information("Batch unlock started for {GameCount} games", this._FilteredGames.Count);
+
             var games = this._FilteredGames.ToList();
             this._PickerToolStrip.Enabled = false;
 
@@ -1450,6 +1562,7 @@ namespace SAM.Picker
                             {
                                 proc.Kill();
                                 failed++;
+                                Log.Warning("Batch unlock timed out for appId {AppId} ({GameName})", game.Id, game.Name);
                             }
                             else if (proc.ExitCode == 0)
                             {
@@ -1458,11 +1571,13 @@ namespace SAM.Picker
                             else
                             {
                                 failed++;
+                                Log.Warning("Batch unlock failed for appId {AppId} ({GameName}), exit code {ExitCode}", game.Id, game.Name, proc.ExitCode);
                             }
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        Log.Error(ex, "Batch unlock process error for appId {AppId} ({GameName})", game.Id, game.Name);
                         failed++;
                     }
                 }
@@ -1479,11 +1594,13 @@ namespace SAM.Picker
 
                 if (args.Error != null)
                 {
+                    Log.Error(args.Error, "Batch unlock completed with error");
                     MessageBox.Show(this, $"Error: {args.Error.Message}", Localization.Get("Error"),
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (args.Result is int[] counts)
                 {
+                    Log.Information("Batch unlock completed: {Success} succeeded, {Failed} failed", counts[0], counts[1]);
                     MessageBox.Show(this,
                         Localization.Get("BatchComplete", counts[0], counts[1]),
                         Localization.Get("Results"),
@@ -1522,6 +1639,8 @@ namespace SAM.Picker
             using (var dialog = new IdleSettingsDialog(games.Count))
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Settings == null) return;
+                Log.Information("Idle started for {GameCount} games, mode: {IdleMode}",
+                    games.Count, dialog.Settings.ToString());
                 var form = new ActiveGamesForm(games, dialog.Settings);
                 form.Show(this);
             }
@@ -1536,13 +1655,34 @@ namespace SAM.Picker
                     bool langChanged = Localization.Current != dialog.SelectedLanguage;
                     bool viewChanged = (!_IsListView) != dialog.IsTileView;
                     bool apiKeyChanged = AppSettings.SteamApiKey != dialog.ApiKey;
+                    bool logLevelChanged = AppSettings.LogLevel != dialog.SelectedLogLevel;
+
+                    Log.Information("Settings changed: language={LangChanged}, view={ViewChanged}, apiKey={ApiKeyChanged}, logLevel={LogLevelChanged}",
+                        langChanged, viewChanged, apiKeyChanged, logLevelChanged);
 
                     Localization.Current = dialog.SelectedLanguage;
+
+                    if (logLevelChanged)
+                    {
+                        AppSettings.LogLevel = dialog.SelectedLogLevel;
+                        if (System.Enum.TryParse<Serilog.Events.LogEventLevel>(dialog.SelectedLogLevel, true, out var newLevel))
+                        {
+                            LogSetup.LevelSwitch.MinimumLevel = newLevel;
+                            Log.Information("Log level changed to {LogLevel}", dialog.SelectedLogLevel);
+                        }
+                    }
+
+                    if (logLevelChanged && !apiKeyChanged)
+                    {
+                        AppSettings.Save();
+                    }
 
                     if (apiKeyChanged)
                     {
                         AppSettings.SteamApiKey = dialog.ApiKey;
                         AppSettings.Save();
+                        Log.Information("Steam API key {ApiKeyAction}",
+                            string.IsNullOrWhiteSpace(dialog.ApiKey) ? "removed" : "updated");
                         // Force column rebuild to add/remove achievements column
                         this._GameListView.Columns.Clear();
                     }

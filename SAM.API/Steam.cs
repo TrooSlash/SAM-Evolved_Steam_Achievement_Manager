@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -24,6 +24,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using SAM.API.Logging;
 
 namespace SAM.API
 {
@@ -113,8 +114,10 @@ namespace SAM.API
             }
 
             string path = GetInstallPath();
+            ApiLogger.Info($"Steam install path: {path ?? "(not found)"}");
             if (path == null)
             {
+                ApiLogger.Error("Steam install path is null, cannot load SteamClient", null);
                 return false;
             }
 
@@ -124,28 +127,33 @@ namespace SAM.API
             IntPtr module = Native.LoadLibraryEx(path, IntPtr.Zero, Native.LoadWithAlteredSearchPath);
             if (module == IntPtr.Zero)
             {
+                ApiLogger.Error($"Failed to load steamclient.dll from {path}", null);
                 return false;
             }
 
             _CallCreateInterface = GetExportFunction<NativeCreateInterface>(module, "CreateInterface");
             if (_CallCreateInterface == null)
             {
+                ApiLogger.Error("Failed to find CreateInterface export in steamclient.dll", null);
                 return false;
             }
 
             _CallSteamBGetCallback = GetExportFunction<NativeSteamGetCallback>(module, "Steam_BGetCallback");
             if (_CallSteamBGetCallback == null)
             {
+                ApiLogger.Error("Failed to find Steam_BGetCallback export in steamclient.dll", null);
                 return false;
             }
 
             _CallSteamFreeLastCallback = GetExportFunction<NativeSteamFreeLastCallback>(module, "Steam_FreeLastCallback");
             if (_CallSteamFreeLastCallback == null)
             {
+                ApiLogger.Error("Failed to find Steam_FreeLastCallback export in steamclient.dll", null);
                 return false;
             }
 
             _Handle = module;
+            ApiLogger.Info("SteamClient loaded successfully");
             return true;
         }
     }

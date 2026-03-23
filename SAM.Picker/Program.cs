@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -23,6 +23,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Windows.Forms;
 
@@ -69,13 +70,44 @@ namespace SAM.Picker
                 }
             };
 
+            // Run the actual application logic in a separate method so that
+            // the JIT does not try to resolve Serilog before AssemblyResolve is registered.
+            Run();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void Run()
+        {
+            // Initialize settings and logging early
+            AppSettings.Load();
+            LogSetup.Initialize();
+
+            Serilog.Log.Information("=== SAM.Picker starting ===");
+            Serilog.Log.Information("Version: {Version}, .NET: {Runtime}, OS: {OS}",
+                Assembly.GetExecutingAssembly().GetName().Version,
+                Environment.Version,
+                Environment.OSVersion);
+
+            // Global exception handlers
+            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+            {
+                Serilog.Log.Fatal(args.ExceptionObject as Exception, "Unhandled domain exception");
+                Serilog.Log.CloseAndFlush();
+            };
+            Application.ThreadException += (s, args) =>
+            {
+                Serilog.Log.Error(args.Exception, "Unhandled UI thread exception");
+            };
+
             if (API.Steam.GetInstallPath() == Application.StartupPath)
             {
+                Serilog.Log.Error("Attempted to run from Steam directory: {Path}", Application.StartupPath);
                 MessageBox.Show(
                     "This tool declines to being run from the Steam directory.",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+                LogSetup.Shutdown();
                 return;
             }
 
@@ -84,9 +116,11 @@ namespace SAM.Picker
                 try
                 {
                     client.Initialize(0);
+                    Serilog.Log.Information("Steam client initialized successfully");
                 }
                 catch (API.ClientInitializeException e)
                 {
+                    Serilog.Log.Error(e, "Steam client initialization failed: {Failure}", e.Failure);
                     if (string.IsNullOrEmpty(e.Message) == false)
                     {
                         MessageBox.Show(
@@ -104,22 +138,29 @@ namespace SAM.Picker
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
                     }
+                    LogSetup.Shutdown();
                     return;
                 }
-                catch (DllNotFoundException)
+                catch (DllNotFoundException ex)
                 {
+                    Serilog.Log.Fatal(ex, "Steam DLL not found");
                     MessageBox.Show(
                         "You've caused an exceptional error!",
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
+                    LogSetup.Shutdown();
                     return;
                 }
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
+                Serilog.Log.Information("Launching GamePicker UI");
                 Application.Run(new GamePicker(client));
             }
+
+            Serilog.Log.Information("=== SAM.Picker shutting down ===");
+            LogSetup.Shutdown();
         }
     }
 }

@@ -1,5 +1,8 @@
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
+using Serilog;
 
 namespace SAM.Picker
 {
@@ -8,24 +11,30 @@ namespace SAM.Picker
         public Localization.Language SelectedLanguage { get; private set; }
         public bool IsTileView { get; private set; }
         public string ApiKey { get; private set; }
+        public string SelectedLogLevel { get; private set; }
 
         private readonly ComboBox _LanguageCombo;
         private readonly RadioButton _ListRadio;
         private readonly RadioButton _TilesRadio;
         private readonly TextBox _ApiKeyTextBox;
+        private readonly ComboBox _LogLevelCombo;
+
+        // Log level values that map to Serilog LogEventLevel names
+        private static readonly string[] LogLevelValues = { "Debug", "Information", "Warning", "Error" };
 
         public SettingsDialog(Localization.Language currentLang, bool isTileView)
         {
             SelectedLanguage = currentLang;
             IsTileView = isTileView;
             ApiKey = AppSettings.SteamApiKey;
+            SelectedLogLevel = AppSettings.LogLevel;
 
             this.Text = "\u2699 " + Localization.Get("Settings");
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.StartPosition = FormStartPosition.CenterParent;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.ClientSize = new Size(420, 400);
+            this.ClientSize = new Size(420, 480);
             this.BackColor = DarkTheme.DarkBackground;
             this.ForeColor = DarkTheme.Text;
             this.Font = new Font("Segoe UI", 9f);
@@ -118,6 +127,7 @@ namespace SAM.Picker
             showHideButton.Click += (s, e) =>
             {
                 _ApiKeyTextBox.UseSystemPasswordChar = !_ApiKeyTextBox.UseSystemPasswordChar;
+                Log.Debug("User toggled API key visibility: {Visible}", !_ApiKeyTextBox.UseSystemPasswordChar);
                 showHideButton.ForeColor = _ApiKeyTextBox.UseSystemPasswordChar
                     ? DarkTheme.TextSecondary
                     : DarkTheme.Accent;
@@ -137,6 +147,7 @@ namespace SAM.Picker
             testApiButton.FlatAppearance.BorderSize = 1;
             testApiButton.Click += (s, e) =>
             {
+                Log.Information("User clicked Test API key");
                 string key = _ApiKeyTextBox.Text.Trim();
                 if (string.IsNullOrEmpty(key))
                 {
@@ -157,12 +168,14 @@ namespace SAM.Picker
                     testApiButton.Text = Localization.Get("TestApi");
                     if (we.Error != null || we.Result == null)
                     {
+                        Log.Warning("API key test failed");
                         testApiButton.ForeColor = Color.FromArgb(255, 100, 100);
                         MessageBox.Show(this, Localization.Get("ApiKeyInvalid"),
                             Localization.Get("TestApi"), MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     else
                     {
+                        Log.Information("API key test succeeded");
                         testApiButton.ForeColor = Color.FromArgb(100, 220, 100);
                         MessageBox.Show(this, Localization.Get("ApiKeyValid"),
                             Localization.Get("TestApi"), MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -191,11 +204,69 @@ namespace SAM.Picker
             };
             apiLink.LinkClicked += (s, e) =>
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                Log.Debug("User clicked Steam API key link");
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = "https://steamcommunity.com/dev/apikey",
                     UseShellExecute = true
                 });
+            };
+
+            // Log Level
+            var logLevelLabel = new Label
+            {
+                Text = Localization.Get("LogLevel"),
+                Location = new Point(15, 338),
+                Size = new Size(160, 20),
+                ForeColor = DarkTheme.TextBright,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+            };
+
+            _LogLevelCombo = new ComboBox
+            {
+                Location = new Point(180, 335),
+                Size = new Size(130, 23),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = DarkTheme.Surface,
+                ForeColor = DarkTheme.TextBright,
+                FlatStyle = FlatStyle.Flat,
+            };
+            _LogLevelCombo.Items.AddRange(new object[]
+            {
+                Localization.Get("LogLevelDebug"),
+                Localization.Get("LogLevelInformation"),
+                Localization.Get("LogLevelWarning"),
+                Localization.Get("LogLevelError"),
+            });
+            // Select current log level
+            int logLevelIndex = System.Array.IndexOf(LogLevelValues, AppSettings.LogLevel);
+            _LogLevelCombo.SelectedIndex = logLevelIndex >= 0 ? logLevelIndex : 1;
+
+            var openLogsButton = new Button
+            {
+                Text = Localization.Get("OpenLogFolder"),
+                Location = new Point(320, 334),
+                Size = new Size(85, 25),
+                BackColor = DarkTheme.Toolbar,
+                ForeColor = DarkTheme.Text,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8f),
+            };
+            openLogsButton.FlatAppearance.BorderColor = DarkTheme.Border;
+            openLogsButton.FlatAppearance.BorderSize = 1;
+            openLogsButton.Click += (s, e) =>
+            {
+                Log.Debug("User clicked Open Logs folder");
+                string logDir = LogSetup.LogDirectory;
+                if (Directory.Exists(logDir) && Directory.GetFiles(logDir).Length > 0)
+                {
+                    Process.Start("explorer.exe", logDir);
+                }
+                else
+                {
+                    MessageBox.Show(this, Localization.Get("NoLogsYet"),
+                        Localization.Get("Information"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             };
 
             // Buttons
@@ -203,7 +274,7 @@ namespace SAM.Picker
             {
                 Text = Localization.Get("OK"),
                 DialogResult = DialogResult.OK,
-                Location = new Point(230, 350),
+                Location = new Point(230, 430),
                 Size = new Size(80, 30),
                 BackColor = DarkTheme.Accent,
                 ForeColor = DarkTheme.TextBright,
@@ -216,7 +287,7 @@ namespace SAM.Picker
             {
                 Text = Localization.Get("Cancel"),
                 DialogResult = DialogResult.Cancel,
-                Location = new Point(320, 350),
+                Location = new Point(320, 430),
                 Size = new Size(80, 30),
                 BackColor = DarkTheme.Toolbar,
                 ForeColor = DarkTheme.Text,
@@ -229,6 +300,7 @@ namespace SAM.Picker
                 langLabel, _LanguageCombo,
                 viewLabel, _ListRadio, _TilesRadio,
                 apiLabel, _ApiKeyTextBox, showHideButton, testApiButton, apiHint, apiLink,
+                logLevelLabel, _LogLevelCombo, openLogsButton,
                 okButton, cancelButton
             });
 
@@ -244,6 +316,7 @@ namespace SAM.Picker
                         : Localization.Language.English;
                     IsTileView = _TilesRadio.Checked;
                     ApiKey = _ApiKeyTextBox.Text.Trim();
+                    SelectedLogLevel = LogLevelValues[_LogLevelCombo.SelectedIndex];
                 }
             };
         }

@@ -5,6 +5,10 @@ using System.IO;
 using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Serilog;
+
+// Helper: checks if a WebException is an expected HTTP error (400/403/404)
+// These are normal for games without achievements or restricted profiles.
 
 namespace SAM.Picker
 {
@@ -78,8 +82,9 @@ namespace SAM.Picker
                     RealName = player["realname"]?.ToString()
                 };
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warning(ex, "Failed to get player summary for SteamId {SteamId}", steamId);
                 return null;
             }
         }
@@ -97,8 +102,14 @@ namespace SAM.Picker
                 var root = JObject.Parse(json);
                 return root["response"]?["player_level"]?.Value<int>();
             }
-            catch
+            catch (WebException ex) when (ex.Response is HttpWebResponse r && (int)r.StatusCode < 500)
             {
+                Log.Debug("HTTP {StatusCode} getting Steam level for SteamId {SteamId}", (int)r.StatusCode, steamId);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to get Steam level for SteamId {SteamId}", steamId);
                 return null;
             }
         }
@@ -129,8 +140,9 @@ namespace SAM.Picker
                     BadgeCount = badges?.Count ?? 0
                 };
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warning(ex, "Failed to get badges for SteamId {SteamId}", steamId);
                 return null;
             }
         }
@@ -175,8 +187,14 @@ namespace SAM.Picker
                     UnlockedNames = unlockedNames
                 };
             }
-            catch
+            catch (WebException ex) when (ex.Response is HttpWebResponse r && (int)r.StatusCode < 500)
             {
+                Log.Debug("HTTP {StatusCode} getting achievements for AppId {AppId}", (int)r.StatusCode, appId);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to get player achievements for AppId {AppId}", appId);
                 return null;
             }
         }
@@ -204,8 +222,14 @@ namespace SAM.Picker
 
                 return result;
             }
-            catch
+            catch (WebException ex) when (ex.Response is HttpWebResponse r && (int)r.StatusCode < 500)
             {
+                Log.Debug("HTTP {StatusCode} getting global percentages for AppId {AppId}", (int)r.StatusCode, appId);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to get global achievement percentages for AppId {AppId}", appId);
                 return null;
             }
         }
@@ -240,8 +264,14 @@ namespace SAM.Picker
 
                 return result;
             }
-            catch
+            catch (WebException ex) when (ex.Response is HttpWebResponse r && (int)r.StatusCode < 500)
             {
+                Log.Debug("HTTP {StatusCode} getting schema for AppId {AppId}", (int)r.StatusCode, appId);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to get schema for AppId {AppId}", appId);
                 return null;
             }
         }
@@ -262,8 +292,14 @@ namespace SAM.Picker
                     }
                 }
             }
-            catch
+            catch (WebException ex) when (ex.Response is HttpWebResponse r && (int)r.StatusCode < 500)
             {
+                Log.Debug("HTTP {StatusCode} downloading image from {Url}", (int)r.StatusCode, url);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to download image from {Url}", url);
                 return null;
             }
         }

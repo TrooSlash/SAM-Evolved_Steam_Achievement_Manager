@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using Serilog;
 
 namespace SAM.Picker
 {
@@ -39,9 +40,11 @@ namespace SAM.Picker
             {
                 string content = File.ReadAllText(configPath);
                 ParseAppsSection(content, result);
+                Log.Debug("PlaytimeReader parsed {Count} app entries from localconfig.vdf", result.Count);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Log.Warning(ex, "Failed to parse playtime data from {ConfigPath}", configPath);
             }
 
             return result;
@@ -182,7 +185,11 @@ namespace SAM.Picker
                 if (diff.TotalDays < 365) return dt.ToString("dd MMM");
                 return dt.ToString("dd.MM.yyyy");
             }
-            catch { return "—"; }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to format last played timestamp {Timestamp}", unixTimestamp);
+                return "—";
+            }
         }
     }
 }

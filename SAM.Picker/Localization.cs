@@ -151,6 +151,15 @@ namespace SAM.Picker
             { "ColAction", "Action" },
             { "ModeStarting", "  Mode: {0} \u2014 Starting games..." },
 
+            // Logging settings
+            { "LogLevel", "Log Level:" },
+            { "OpenLogFolder", "Open Logs" },
+            { "LogLevelDebug", "Debug" },
+            { "LogLevelInformation", "Information" },
+            { "LogLevelWarning", "Warning" },
+            { "LogLevelError", "Error" },
+            { "NoLogsYet", "No log files yet." },
+
             // Mode short names (for summary)
             { "ModeSimple", "Simple" },
             { "ModeSequential", "Sequential" },
@@ -302,6 +311,15 @@ namespace SAM.Picker
             { "ColElapsed", "\u0412\u0440\u0435\u043C\u044F" },
             { "ColAction", "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0435" },
             { "ModeStarting", "  \u0420\u0435\u0436\u0438\u043C: {0} \u2014 \u0417\u0430\u043F\u0443\u0441\u043A \u0438\u0433\u0440..." },
+
+            // Logging settings
+            { "LogLevel", "\u0423\u0440\u043E\u0432\u0435\u043D\u044C \u043B\u043E\u0433\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F:" },
+            { "OpenLogFolder", "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043B\u043E\u0433\u0438" },
+            { "LogLevelDebug", "\u041E\u0442\u043B\u0430\u0434\u043A\u0430" },
+            { "LogLevelInformation", "\u0418\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044F" },
+            { "LogLevelWarning", "\u041F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u0438\u044F" },
+            { "LogLevelError", "\u041E\u0448\u0438\u0431\u043A\u0438" },
+            { "NoLogsYet", "\u041B\u043E\u0433-\u0444\u0430\u0439\u043B\u043E\u0432 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442." },
 
             // Mode short names (for summary)
             { "ModeSimple", "\u041F\u0440\u043E\u0441\u0442\u043E\u0439" },

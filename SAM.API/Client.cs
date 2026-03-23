@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using SAM.API.Logging;
 
 namespace SAM.API
 {
@@ -44,8 +45,11 @@ namespace SAM.API
 
         public void Initialize(long appId)
         {
+            ApiLogger.Info($"Initializing Steam client for appId {appId}");
+
             if (string.IsNullOrEmpty(Steam.GetInstallPath()) == true)
             {
+                ApiLogger.Error("Failed to get Steam install path", null);
                 throw new ClientInitializeException(ClientInitializeFailure.GetInstallPath, "failed to get Steam install path");
             }
 
@@ -56,30 +60,35 @@ namespace SAM.API
 
             if (Steam.Load() == false)
             {
+                ApiLogger.Error("Failed to load SteamClient", null);
                 throw new ClientInitializeException(ClientInitializeFailure.Load, "failed to load SteamClient");
             }
 
             this.SteamClient = Steam.CreateInterface<Wrappers.SteamClient018>("SteamClient018");
             if (this.SteamClient == null)
             {
+                ApiLogger.Error("Failed to create ISteamClient018", null);
                 throw new ClientInitializeException(ClientInitializeFailure.CreateSteamClient, "failed to create ISteamClient018");
             }
 
             this._Pipe = this.SteamClient.CreateSteamPipe();
             if (this._Pipe == 0)
             {
+                ApiLogger.Error("Failed to create Steam pipe", null);
                 throw new ClientInitializeException(ClientInitializeFailure.CreateSteamPipe, "failed to create pipe");
             }
 
             this._User = this.SteamClient.ConnectToGlobalUser(this._Pipe);
             if (this._User == 0)
             {
+                ApiLogger.Error("Failed to connect to global user", null);
                 throw new ClientInitializeException(ClientInitializeFailure.ConnectToGlobalUser, "failed to connect to global user");
             }
 
             this.SteamUtils = this.SteamClient.GetSteamUtils004(this._Pipe);
             if (appId > 0 && this.SteamUtils.GetAppId() != (uint)appId)
             {
+                ApiLogger.Error($"AppId mismatch: expected {appId}, got {this.SteamUtils.GetAppId()}", null);
                 throw new ClientInitializeException(ClientInitializeFailure.AppIdMismatch, "appID mismatch");
             }
 
@@ -87,6 +96,8 @@ namespace SAM.API
             this.SteamUserStats = this.SteamClient.GetSteamUserStats013(this._User, this._Pipe);
             this.SteamApps001 = this.SteamClient.GetSteamApps001(this._User, this._Pipe);
             this.SteamApps008 = this.SteamClient.GetSteamApps008(this._User, this._Pipe);
+
+            ApiLogger.Info($"Steam client initialized successfully for appId {appId}, SteamId {this.SteamUser.GetSteamId()}");
         }
 
         ~Client()
@@ -100,6 +111,8 @@ namespace SAM.API
             {
                 return;
             }
+
+            ApiLogger.Debug($"Disposing Steam client (disposing={disposing})");
 
             if (this.SteamClient != null && this._Pipe > 0)
             {

@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
+using Serilog;
 
 namespace SAM.Picker
 {
@@ -18,7 +20,11 @@ namespace SAM.Picker
             public bool IsPaused;
             public ListViewItem ListItem;
             public TimeSpan AccumulatedTime;
+            public int FailedStarts;
         }
+
+        private const int MaxFailedStarts = 3;
+        private const int MinRunSeconds = 15;
 
         private ListView _GamesList;
         private Button _StopAllButton;
@@ -91,6 +97,10 @@ namespace SAM.Picker
                 HeaderStyle = ColumnHeaderStyle.Nonclickable,
                 Font = new Font("Segoe UI", 9F)
             };
+            // Enable double-buffering to prevent flickering on timer updates
+            typeof(ListView).GetProperty("DoubleBuffered",
+                BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.SetValue(_GamesList, true, null);
             _GamesList.Columns.Add(Localization.Get("ColGame"), 220);
             _GamesList.Columns.Add(Localization.Get("ColAppId"), 65, HorizontalAlignment.Center);
             _GamesList.Columns.Add(Localization.Get("ColStatus"), 90, HorizontalAlignment.Center);
@@ -162,6 +172,9 @@ namespace SAM.Picker
             _BatchIndex = 0;
             _GameIndex = 0;
             _SchedulePaused = false;
+
+            Log.Information("Idle session started: Mode={Mode}, Games={GameCount}, MaxGames={MaxGames}, Hours={Hours}",
+                _Settings.Mode, _AllGames.Count, _Settings.MaxGames, _Settings.Hours);
 
             // Populate all entries (not launched yet)
             foreach (var game in _AllGames)
@@ -241,9 +254,11 @@ namespace SAM.Picker
                     CreateNoWindow = true
                 };
                 entry.Process = Process.Start(psi);
+                Log.Information("Launched idle process for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Error(ex, "Failed to launch idle process for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
                 entry.Process = null;
             }
 
@@ -314,9 +329,15 @@ namespace SAM.Picker
             int actionColMid = actionColLeft + _GamesList.Columns[actionColIdx].Width / 2;
 
             if (e.X < actionColMid)
+            {
+                Log.Debug("User clicked Pause/Resume for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
                 TogglePause(entry);
+            }
             else
+            {
+                Log.Debug("User clicked Stop for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
                 StopGame(entry);
+            }
         }
 
         private void TogglePause(GameEntry entry)
@@ -339,8 +360,12 @@ namespace SAM.Picker
                     entry.ListItem.SubItems[2].Text = Localization.Get("StatusRunning");
                     entry.ListItem.SubItems[4].Text = Localization.Get("ActionPauseStop");
                     entry.ListItem.ForeColor = DarkTheme.AccentSecondary;
+                    Log.Information("Resumed idle for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to resume idle process for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
+                }
             }
             else
             {
@@ -350,6 +375,7 @@ namespace SAM.Picker
                 entry.ListItem.SubItems[2].Text = Localization.Get("StatusPaused");
                 entry.ListItem.SubItems[4].Text = Localization.Get("ActionResumeStop");
                 entry.ListItem.ForeColor = DarkTheme.AccentWarning;
+                Log.Information("Paused idle for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
             }
 
             UpdateSummary();
@@ -367,6 +393,7 @@ namespace SAM.Picker
             entry.ListItem.SubItems[2].Text = Localization.Get("StatusStopped");
             entry.ListItem.SubItems[4].Text = "—";
             entry.ListItem.ForeColor = DarkTheme.TextMuted;
+            Log.Information("Stopped idle for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
             UpdateSummary();
         }
 
@@ -384,25 +411,40 @@ namespace SAM.Picker
                         using var stopEvent = System.Threading.EventWaitHandle.OpenExisting(eventName);
                         stopEvent.Set();
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Could not open stop event for AppId {AppId}", entry.Info.Id);
+                    }
 
                     // Wait for graceful exit (3 sec), then force kill
                     if (!entry.Process.WaitForExit(3000))
                     {
-                        try { entry.Process.Kill(); } catch { }
+                        try { entry.Process.Kill(); }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "Failed to kill process for AppId {AppId}", entry.Info.Id);
+                        }
                         entry.Process.WaitForExit(1000);
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Error while killing process for AppId {AppId}", entry.Info.Id);
+            }
             finally
             {
-                try { entry.Process?.Dispose(); } catch { }
+                try { entry.Process?.Dispose(); }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Error disposing process for AppId {AppId}", entry.Info.Id);
+                }
             }
         }
 
         private void OnStopAll(object sender, EventArgs e)
         {
+            Log.Information("Stopping all idle sessions");
             foreach (var entry in _Entries)
             {
                 if (entry.Process != null)
@@ -414,6 +456,8 @@ namespace SAM.Picker
 
         private void OnUpdateTimer(object sender, EventArgs e)
         {
+            _GamesList.BeginUpdate();
+
             // Update elapsed times for running entries
             foreach (var entry in _Entries)
             {
@@ -423,21 +467,56 @@ namespace SAM.Picker
                 {
                     if (entry.Process.HasExited && !entry.IsPaused)
                     {
-                        entry.AccumulatedTime += DateTime.Now - entry.StartTime;
-                        try { entry.Process.Dispose(); } catch { }
+                        var runDuration = DateTime.Now - entry.StartTime;
+                        entry.AccumulatedTime += runDuration;
+                        try { entry.Process.Dispose(); }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "Error disposing exited process for AppId {AppId}", entry.Info.Id);
+                        }
                         entry.Process = null;
+
+                        // Track rapid crashes: if process ran less than MinRunSeconds, count as failed start
+                        if (runDuration.TotalSeconds < MinRunSeconds)
+                        {
+                            entry.FailedStarts++;
+                            Log.Warning("Process for {GameName} (AppId={AppId}) exited after {Seconds:F0}s (fail {Count}/{Max})",
+                                entry.Info.Name, entry.Info.Id, runDuration.TotalSeconds, entry.FailedStarts, MaxFailedStarts);
+
+                            if (entry.FailedStarts >= MaxFailedStarts)
+                            {
+                                entry.ListItem.SubItems[2].Text = Localization.Get("StatusFailed");
+                                entry.ListItem.SubItems[4].Text = "—";
+                                entry.ListItem.ForeColor = DarkTheme.AccentDanger;
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            // Process ran long enough — reset fail counter
+                            entry.FailedStarts = 0;
+                            Log.Warning("Process for {GameName} (AppId={AppId}) exited unexpectedly after {Duration}",
+                                entry.Info.Name, entry.Info.Id, runDuration);
+                        }
+
                         entry.ListItem.SubItems[2].Text = Localization.Get("StatusExited");
                         entry.ListItem.SubItems[4].Text = "—";
                         entry.ListItem.ForeColor = DarkTheme.AccentDanger;
                         continue;
                     }
                 }
-                catch { continue; }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Error checking process status for AppId {AppId}", entry.Info.Id);
+                    continue;
+                }
 
                 if (!entry.IsPaused)
                 {
                     var elapsed = entry.AccumulatedTime + (DateTime.Now - entry.StartTime);
-                    entry.ListItem.SubItems[3].Text = FormatElapsed(elapsed);
+                    string text = FormatElapsed(elapsed);
+                    if (entry.ListItem.SubItems[3].Text != text)
+                        entry.ListItem.SubItems[3].Text = text;
                 }
             }
 
@@ -468,6 +547,13 @@ namespace SAM.Picker
             }
 
             UpdateSummary();
+
+            _GamesList.EndUpdate();
+        }
+
+        private bool CanRestart(GameEntry entry)
+        {
+            return entry.FailedStarts < MaxFailedStarts;
         }
 
         private void TickSimple(TimeSpan elapsed)
@@ -502,9 +588,10 @@ namespace SAM.Picker
                 _BatchStartTime = DateTime.UtcNow;
             }
 
-            // Restart if process died
+            // Restart if process died (with retry limit)
             if (_GameIndex < _Entries.Count && _Entries[_GameIndex].Process == null
-                && _Entries[_GameIndex].ListItem.SubItems[2].Text != Localization.Get("StatusStopped"))
+                && _Entries[_GameIndex].ListItem.SubItems[2].Text != Localization.Get("StatusStopped")
+                && CanRestart(_Entries[_GameIndex]))
             {
                 LaunchEntry(_Entries[_GameIndex]);
             }
@@ -547,12 +634,14 @@ namespace SAM.Picker
                 LaunchBatch(_BatchIndex, batchSize);
             }
 
-            // Restart dead processes in current batch
+            // Restart dead processes in current batch (with retry limit)
             int end = Math.Min(_BatchIndex + batchSize, _Entries.Count);
             for (int i = _BatchIndex; i < end; i++)
             {
                 var entry = _Entries[i];
-                if (entry.Process == null && entry.ListItem.SubItems[2].Text != Localization.Get("StatusStopped"))
+                if (entry.Process == null
+                    && entry.ListItem.SubItems[2].Text != Localization.Get("StatusStopped")
+                    && CanRestart(entry))
                 {
                     LaunchEntry(entry);
                 }
@@ -567,10 +656,12 @@ namespace SAM.Picker
             if (inWindow && _SchedulePaused)
             {
                 _SchedulePaused = false;
+                Log.Information("Schedule window active, resuming idle sessions");
                 LaunchBatch(0, batchSize);
             }
             else if (!inWindow && !_SchedulePaused)
             {
+                Log.Information("Schedule window ended, pausing idle sessions");
                 // Kill all running and update status to show they are paused due to schedule
                 foreach (var entry in _Entries)
                 {
@@ -648,6 +739,7 @@ namespace SAM.Picker
 
         private void AutoStop()
         {
+            Log.Information("Auto-stop triggered after {Elapsed} total elapsed time", DateTime.UtcNow - _IdleStartTime);
             OnStopAll(null, null);
             _UpdateTimer.Stop();
             _SummaryLabel.Text = Localization.Get("IdleComplete");
@@ -660,7 +752,11 @@ namespace SAM.Picker
             {
                 if (entry.Process != null && !entry.IsPaused)
                 {
-                    try { if (!entry.Process.HasExited) count++; } catch { }
+                    try { if (!entry.Process.HasExited) count++; }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Error checking if process is running for AppId {AppId}", entry.Info.Id);
+                    }
                 }
             }
             return count;
@@ -673,7 +769,11 @@ namespace SAM.Picker
             {
                 if (entry.Process != null && !entry.IsPaused)
                 {
-                    try { if (!entry.Process.HasExited) { running++; continue; } } catch { }
+                    try { if (!entry.Process.HasExited) { running++; continue; } }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Error checking process status in UpdateSummary for AppId {AppId}", entry.Info.Id);
+                    }
                 }
                 if (entry.IsPaused) paused++;
                 else if (entry.Process == null) stopped++;
@@ -719,7 +819,11 @@ namespace SAM.Picker
             {
                 if (entry.Process != null)
                 {
-                    try { if (!entry.Process.HasExited) { hasRunning = true; break; } } catch { }
+                    try { if (!entry.Process.HasExited) { hasRunning = true; break; } }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Error checking process status on form closing for AppId {AppId}", entry.Info.Id);
+                    }
                 }
             }
 
@@ -744,6 +848,7 @@ namespace SAM.Picker
             // Clean up orphaned appmanifest files created during idle
             CleanupOrphanedManifests();
 
+            Log.Information("Idle session closed, total duration: {Elapsed}", DateTime.UtcNow - _IdleStartTime);
             _UpdateTimer.Dispose();
         }
 
@@ -826,12 +931,18 @@ namespace SAM.Picker
                                 if (Directory.Exists(fullInstallPath))
                                     Directory.Delete(fullInstallPath, false);
                             }
-                            catch { }
+                            catch (Exception ex)
+                            {
+                                Log.Warning(ex, "Failed to clean up orphaned manifest for AppId {AppId}", appId);
+                            }
                         }
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Error during orphaned manifest cleanup");
+            }
         }
     }
 }

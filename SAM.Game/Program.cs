@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -24,6 +24,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Threading;
 using System.Windows.Forms;
@@ -91,13 +92,40 @@ namespace SAM.Game
                 return;
             }
 
+            // Run the actual application logic in a separate method so that
+            // the JIT does not try to resolve Serilog before AssemblyResolve is registered.
+            Run(args, appId);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void Run(string[] args, long appId)
+        {
+            // Initialize logging with appId in filename
+            LogSetup.Initialize(appId);
+
+            Serilog.Log.Information("=== SAM.Game starting === AppId: {AppId}, Args: {Args}",
+                appId, string.Join(" ", args));
+            Serilog.Log.Information("Version: {Version}, .NET: {Runtime}, OS: {OS}",
+                Assembly.GetExecutingAssembly().GetName().Version,
+                Environment.Version,
+                Environment.OSVersion);
+
+            // Global exception handler
+            AppDomain.CurrentDomain.UnhandledException += (s, ue) =>
+            {
+                Serilog.Log.Fatal(ue.ExceptionObject as Exception, "Unhandled domain exception");
+                Serilog.Log.CloseAndFlush();
+            };
+
             if (API.Steam.GetInstallPath() == Application.StartupPath)
             {
+                Serilog.Log.Error("Attempted to run from Steam directory: {Path}", Application.StartupPath);
                 MessageBox.Show(
                     "This tool declines to being run from the Steam directory.",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+                LogSetup.Shutdown();
                 return;
             }
 
@@ -113,18 +141,25 @@ namespace SAM.Game
             }
             bool headless = unlockAll || idle;
 
+            Serilog.Log.Information("Mode: {Mode}, IdleHours: {Hours}",
+                unlockAll ? "unlock-all" : idle ? "idle" : "GUI",
+                idleHours);
+
             using (API.Client client = new())
             {
                 try
                 {
                     client.Initialize(appId);
+                    Serilog.Log.Information("Steam client initialized for app {AppId}", appId);
                 }
                 catch (API.ClientInitializeException e)
                 {
+                    Serilog.Log.Error(e, "Steam client init failed for app {AppId}: {Failure}", appId, e.Failure);
                     if (headless)
                     {
                         Console.Error.WriteLine($"Failed to initialize: {e.Message}");
                         Environment.ExitCode = 1;
+                        LogSetup.Shutdown();
                         return;
                     }
 
@@ -156,14 +191,17 @@ namespace SAM.Game
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
                     }
+                    LogSetup.Shutdown();
                     return;
                 }
-                catch (DllNotFoundException)
+                catch (DllNotFoundException ex)
                 {
+                    Serilog.Log.Fatal(ex, "Steam DLL not found for app {AppId}", appId);
                     if (headless)
                     {
                         Console.Error.WriteLine("DLL not found error.");
                         Environment.ExitCode = 1;
+                        LogSetup.Shutdown();
                         return;
                     }
 
@@ -172,25 +210,38 @@ namespace SAM.Game
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
+                    LogSetup.Shutdown();
                     return;
                 }
 
                 if (unlockAll)
                 {
-                    Environment.ExitCode = RunHeadlessUnlockAll(appId, client) ? 0 : 1;
+                    Serilog.Log.Information("Starting headless unlock-all for app {AppId}", appId);
+                    bool result = RunHeadlessUnlockAll(appId, client);
+                    Serilog.Log.Information("Headless unlock-all result: {Result}", result ? "success" : "failed");
+                    Environment.ExitCode = result ? 0 : 1;
+                    LogSetup.Shutdown();
                     return;
                 }
 
                 if (idle)
                 {
-                    Environment.ExitCode = RunIdle(appId, client, idleHours) ? 0 : 1;
+                    Serilog.Log.Information("Starting idle for app {AppId}, hours: {Hours}", appId, idleHours);
+                    bool result = RunIdle(appId, client, idleHours);
+                    Serilog.Log.Information("Idle complete for app {AppId}, result: {Result}", appId, result ? "success" : "failed");
+                    Environment.ExitCode = result ? 0 : 1;
+                    LogSetup.Shutdown();
                     return;
                 }
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
+                Serilog.Log.Information("Launching Manager UI for app {AppId}", appId);
                 Application.Run(new Manager(appId, client));
             }
+
+            Serilog.Log.Information("=== SAM.Game shutting down ===");
+            LogSetup.Shutdown();
         }
 
         private static bool RunHeadlessUnlockAll(long appId, API.Client client)
@@ -200,6 +251,7 @@ namespace SAM.Game
             var callHandle = client.SteamUserStats.RequestUserStats(steamId);
             if (callHandle == API.CallHandle.Invalid)
             {
+                Serilog.Log.Error("RequestUserStats returned invalid handle for app {AppId}", appId);
                 return false;
             }
 
@@ -222,11 +274,14 @@ namespace SAM.Game
 
             if (!statsReceived || statsResult != 1)
             {
+                Serilog.Log.Error("Stats not received or failed for app {AppId}: received={Received}, result={Result}",
+                    appId, statsReceived, statsResult);
                 return false;
             }
 
             // Enumerate achievements using API
             uint numAchievements = client.SteamUserStats.GetNumAchievements();
+            Serilog.Log.Information("Found {Count} achievements for app {AppId}", numAchievements, appId);
             if (numAchievements == 0)
             {
                 return true; // no achievements = success
@@ -248,9 +303,12 @@ namespace SAM.Game
 
                 if (client.SteamUserStats.SetAchievement(name, true))
                 {
+                    Serilog.Log.Debug("Unlocked achievement: {Name}", name);
                     unlocked++;
                 }
             }
+
+            Serilog.Log.Information("Unlock-all: {Unlocked} achievements modified for app {AppId}", unlocked, appId);
 
             if (unlocked > 0)
             {
@@ -282,6 +340,7 @@ namespace SAM.Game
             {
                 e.Cancel = true;
                 cancelled = true;
+                Serilog.Log.Information("Idle cancelled by Ctrl+C for app {AppId}", appId);
             };
 
             // Named event for graceful shutdown from ActiveGamesForm
@@ -293,6 +352,7 @@ namespace SAM.Game
                 // Wait 5 seconds or until stop event is signaled
                 if (stopEvent.WaitOne(5000))
                 {
+                    Serilog.Log.Information("Idle received stop signal for app {AppId}", appId);
                     Console.WriteLine("\nReceived stop signal.");
                     break;
                 }
@@ -312,6 +372,7 @@ namespace SAM.Game
 
             Console.WriteLine();
             var total = DateTime.UtcNow - startTime;
+            Serilog.Log.Information("Idle complete for app {AppId}: {TotalHours:F2} hours", appId, total.TotalHours);
             Console.WriteLine($"Idle complete. Total time: {total.TotalHours:F2} hours.");
             return true;
         }
