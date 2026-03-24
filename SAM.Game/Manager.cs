@@ -53,6 +53,10 @@ namespace SAM.Game
         private bool _IsVacProtected;
         private bool _VacClickWarned;
 
+        private readonly ToolTip _AchievementToolTip = new() { InitialDelay = 400, ReshowDelay = 200 };
+        private ListViewItem _LastTooltipItem;
+        private bool _AllProtectedWarningShown;
+
         private readonly API.Callbacks.UserStatsReceived _UserStatsReceivedCallback;
 
         //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
@@ -95,6 +99,7 @@ namespace SAM.Game
             this._SteamClient = client;
 
             this._IconDownloader.DownloadDataCompleted += this.OnIconDownload;
+            this._AchievementListView.MouseMove += this.OnAchievementMouseMove;
 
             string name = this._SteamClient.SteamApps001.GetAppData((uint)this._GameId, "name");
             if (name != null)
@@ -116,6 +121,15 @@ namespace SAM.Game
             this.RefreshStats();
             this.FetchGlobalPercentages();
             this.CheckVacStatus();
+        }
+
+        private void UpdateTitleProtectedCount(int protectedCount)
+        {
+            string marker = $" | \u26A0 {protectedCount} {GameLocalization.Get("ProtectedAchievements")}";
+            if (base.Text.Contains("\u26A0") == false)
+            {
+                base.Text += marker;
+            }
         }
 
         private void CheckVacStatus()
@@ -602,10 +616,41 @@ namespace SAM.Game
                 this._MainTabControl.TabPages.Add(this._StatisticsTabPage);
             }
 
-            Log.Information("Successfully received user stats for AppId {AppId}: {AchievementCount} achievements, {StatCount} statistics",
-                this._GameId, this._AchievementListView.Items.Count, this._StatisticsDataGridView.Rows.Count);
+            // Count protected achievements and update title bar
+            int protectedCount = 0;
+            foreach (ListViewItem item in this._AchievementListView.Items)
+            {
+                if (item.Tag is Stats.AchievementInfo ai && (ai.Permission & 3) != 0)
+                {
+                    protectedCount++;
+                }
+            }
 
-            this._GameStatusLabel.Text = GameLocalization.Get("RetrievedStats", this._AchievementListView.Items.Count, this._StatisticsDataGridView.Rows.Count);
+            Log.Information("Successfully received user stats for AppId {AppId}: {AchievementCount} achievements ({ProtectedCount} protected), {StatCount} statistics",
+                this._GameId, this._AchievementListView.Items.Count, protectedCount, this._StatisticsDataGridView.Rows.Count);
+
+            if (protectedCount > 0)
+            {
+                this.UpdateTitleProtectedCount(protectedCount);
+                API.ProtectedGamesCache.MarkProtected((uint)this._GameId);
+            }
+
+            int totalAchievements = this._AchievementListView.Items.Count;
+
+            // Warn if ALL achievements are protected — nothing can be modified (show once per session)
+            if (protectedCount > 0 && protectedCount == totalAchievements && !this._AllProtectedWarningShown)
+            {
+                this._AllProtectedWarningShown = true;
+                Log.Warning("All {Count} achievements are protected for AppId {AppId}", protectedCount, this._GameId);
+                MessageBox.Show(
+                    this,
+                    GameLocalization.Get("AllProtectedWarning"),
+                    "\u26A0 " + GameLocalization.Get("Information"),
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+
+            this._GameStatusLabel.Text = GameLocalization.Get("RetrievedStats", totalAchievements, this._StatisticsDataGridView.Rows.Count);
             this.EnableInput();
         }
 
@@ -645,6 +690,7 @@ namespace SAM.Game
 
             bool wantLocked = this._DisplayLockedOnlyButton.Checked == true;
             bool wantUnlocked = this._DisplayUnlockedOnlyButton.Checked == true;
+            bool hideProtected = this._HideProtectedButton.Checked == true;
 
             foreach (var def in this._AchievementDefinitions)
             {
@@ -667,6 +713,11 @@ namespace SAM.Game
                     false => wantLocked,
                 };
                 if (wanted == false)
+                {
+                    continue;
+                }
+
+                if (hideProtected && (def.Permission & 3) != 0)
                 {
                     continue;
                 }
@@ -1158,10 +1209,34 @@ namespace SAM.Game
             this.GetAchievements();
         }
 
+        private void OnHideProtectedClick(object sender, EventArgs e)
+        {
+            Log.Debug("User toggled filter: hide protected = {State}", this._HideProtectedButton.Checked);
+            this.GetAchievements();
+        }
+
         private void OnFilterUpdate(object sender, KeyEventArgs e)
         {
             Log.Debug("Achievement filter updated");
             this.GetAchievements();
+        }
+
+        private void OnAchievementMouseMove(object sender, MouseEventArgs e)
+        {
+            var hit = this._AchievementListView.HitTest(e.Location);
+            if (hit.Item == this._LastTooltipItem) return;
+
+            this._LastTooltipItem = hit.Item;
+
+            if (hit.Item?.Tag is Stats.AchievementInfo info && (info.Permission & 3) != 0)
+            {
+                this._AchievementToolTip.SetToolTip(this._AchievementListView,
+                    GameLocalization.Get("ProtectedTooltip"));
+            }
+            else
+            {
+                this._AchievementToolTip.SetToolTip(this._AchievementListView, null);
+            }
         }
 
         private void OnAchievementMouseClick(object sender, MouseEventArgs e)
@@ -1297,16 +1372,27 @@ namespace SAM.Game
                 {
                     var img = this._AchievementImageList.Images[info.ImageIndex];
                     e.Graphics.DrawImage(img, iconX, iconY, iconSize, iconSize);
+
+                    // Draw lock overlay for protected achievements
+                    if (isProtected)
+                    {
+                        DrawLockOverlay(e.Graphics, iconX, iconY, iconSize);
+                    }
                 }
 
-                // Draw name text
+                // Draw name text (with lock prefix for protected)
                 int textX = iconX + iconSize + 6;
                 int textWidth = e.Bounds.Right - textX;
                 if (textWidth > 0)
                 {
+                    string displayName = isProtected
+                        ? "\U0001F512 " + e.Item.Text
+                        : e.Item.Text;
                     var textRect = new Rectangle(textX, e.Bounds.Y, textWidth, e.Bounds.Height);
-                    Color textColor = isChecked ? DarkTheme.AccentSecondary : DarkTheme.Text;
-                    TextRenderer.DrawText(e.Graphics, e.Item.Text, this.Font, textRect, textColor,
+                    Color textColor = isProtected
+                        ? Color.FromArgb(180, 140, 100)
+                        : isChecked ? DarkTheme.AccentSecondary : DarkTheme.Text;
+                    TextRenderer.DrawText(e.Graphics, displayName, this.Font, textRect, textColor,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
                 }
             }
@@ -1318,6 +1404,32 @@ namespace SAM.Game
                 TextRenderer.DrawText(e.Graphics, text, this.Font, textRect, textColor,
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
             }
+        }
+
+        private static void DrawLockOverlay(Graphics g, int iconX, int iconY, int iconSize)
+        {
+            // Small lock icon in bottom-right corner of the achievement icon
+            int lockSize = 14;
+            int lx = iconX + iconSize - lockSize - 1;
+            int ly = iconY + iconSize - lockSize - 1;
+
+            // Background circle
+            using (var bgBrush = new SolidBrush(Color.FromArgb(200, 30, 30, 30)))
+                g.FillEllipse(bgBrush, lx - 1, ly - 1, lockSize + 2, lockSize + 2);
+
+            // Lock body
+            int bodyW = 8, bodyH = 6;
+            int bodyX = lx + (lockSize - bodyW) / 2;
+            int bodyY = ly + lockSize - bodyH - 2;
+            using (var brush = new SolidBrush(Color.FromArgb(220, 180, 60)))
+                g.FillRectangle(brush, bodyX, bodyY, bodyW, bodyH);
+
+            // Lock shackle (arc)
+            int shackleW = 6, shackleH = 5;
+            int shackleX = bodyX + (bodyW - shackleW) / 2;
+            int shackleY = bodyY - shackleH + 1;
+            using (var pen = new Pen(Color.FromArgb(220, 180, 60), 1.5f))
+                g.DrawArc(pen, shackleX, shackleY, shackleW, shackleH * 2, 180, 180);
         }
 
         private void ApplyLocalization()
@@ -1334,6 +1446,7 @@ namespace SAM.Game
             this._DisplayLabel.Text = GameLocalization.Get("ShowOnly");
             this._DisplayLockedOnlyButton.Text = GameLocalization.Get("Locked");
             this._DisplayUnlockedOnlyButton.Text = GameLocalization.Get("Unlocked");
+            this._HideProtectedButton.Text = GameLocalization.Get("HideProtected");
             this._MatchingStringLabel.Text = GameLocalization.Get("Filter");
             this._LockAllButton.Text = GameLocalization.Get("LockAll");
             this._InvertAllButton.Text = GameLocalization.Get("InvertAll");

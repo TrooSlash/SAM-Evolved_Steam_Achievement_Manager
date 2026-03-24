@@ -26,10 +26,9 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
+using System.Security.Principal;
 using System.Threading;
 using System.Windows.Forms;
-using System.Security.AccessControl;
-using System.Security.Principal;
 
 namespace SAM.Game
 {
@@ -145,6 +144,29 @@ namespace SAM.Game
                 unlockAll ? "unlock-all" : idle ? "idle" : "GUI",
                 idleHours);
 
+            // Extended diagnostics for Issue #2 ("failed to create pipe")
+            Serilog.Log.Debug("--- Diagnostic snapshot ---");
+            Serilog.Log.Debug("Executable: {Path}", Assembly.GetExecutingAssembly().Location);
+            Serilog.Log.Debug("WorkingDirectory: {Cwd}", Environment.CurrentDirectory);
+            Serilog.Log.Debug("SteamAppId env: {Value}",
+                Environment.GetEnvironmentVariable("SteamAppId") ?? "(not set)");
+            Serilog.Log.Debug("Steam install: {Path}", API.Steam.GetInstallPath() ?? "(null)");
+            Serilog.Log.Debug("IsElevated: {Elevated}", IsProcessElevated());
+            try
+            {
+                using (var current = Process.GetCurrentProcess())
+                using (var parent = ParentProcessHelper.GetParentProcess(current))
+                {
+                    Serilog.Log.Debug("ParentProcess: {Name} (PID {Pid})",
+                        parent?.ProcessName ?? "(unknown)", parent?.Id ?? -1);
+                }
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Debug("ParentProcess: could not determine ({Error})", ex.Message);
+            }
+            Serilog.Log.Debug("--- End diagnostic snapshot ---");
+
             using (API.Client client = new())
             {
                 try
@@ -163,34 +185,37 @@ namespace SAM.Game
                         return;
                     }
 
-                    if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
+                    string errorMsg;
+                    if (e.Failure == API.ClientInitializeFailure.CreateSteamPipe)
                     {
-                        MessageBox.Show(
+                        errorMsg =
+                            "Failed to connect to Steam client.\n\n" +
+                            "Possible solutions:\n" +
+                            "- Run SAM from a local folder (not OneDrive or cloud storage)\n" +
+                            "- Make sure SAM and Steam run with the same privileges\n" +
+                            "- Close other SAM instances and try again\n" +
+                            "- Restart Steam and try again\n\n" +
+                            "(" + e.Message + ")";
+                    }
+                    else if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
+                    {
+                        errorMsg =
                             "Steam is not running. Please start Steam then run this tool again.\n\n" +
                             "If you have the game through Family Share, the game may be locked due to\n" +
                             "the Family Share account actively playing a game.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                            "(" + e.Message + ")";
                     }
                     else if (string.IsNullOrEmpty(e.Message) == false)
                     {
-                        MessageBox.Show(
+                        errorMsg =
                             "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                            "(" + e.Message + ")";
                     }
                     else
                     {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                        errorMsg = "Steam is not running. Please start Steam then run this tool again.";
                     }
+                    MessageBox.Show(errorMsg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     LogSetup.Shutdown();
                     return;
                 }
@@ -375,6 +400,62 @@ namespace SAM.Game
             Serilog.Log.Information("Idle complete for app {AppId}: {TotalHours:F2} hours", appId, total.TotalHours);
             Console.WriteLine($"Idle complete. Total time: {total.TotalHours:F2} hours.");
             return true;
+        }
+
+        private static bool IsProcessElevated()
+        {
+            try
+            {
+                using (var identity = WindowsIdentity.GetCurrent())
+                {
+                    var principal = new WindowsPrincipal(identity);
+                    return principal.IsInRole(WindowsBuiltInRole.Administrator);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
+    internal static class ParentProcessHelper
+    {
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct PROCESS_BASIC_INFORMATION
+        {
+            public IntPtr Reserved1;
+            public IntPtr PebBaseAddress;
+            public IntPtr Reserved2_0;
+            public IntPtr Reserved2_1;
+            public IntPtr UniqueProcessId;
+            public IntPtr InheritedFromUniqueProcessId;
+        }
+
+        [System.Runtime.InteropServices.DllImport("ntdll.dll")]
+        private static extern int NtQueryInformationProcess(
+            IntPtr processHandle, int processInformationClass,
+            ref PROCESS_BASIC_INFORMATION processInformation,
+            int processInformationLength, out int returnLength);
+
+        public static Process GetParentProcess(Process process)
+        {
+            try
+            {
+                var pbi = new PROCESS_BASIC_INFORMATION();
+                int status = NtQueryInformationProcess(
+                    process.Handle, 0, ref pbi,
+                    System.Runtime.InteropServices.Marshal.SizeOf(pbi), out _);
+                if (status != 0) return null;
+
+                int parentPid = pbi.InheritedFromUniqueProcessId.ToInt32();
+                if (parentPid <= 0) return null;
+                return Process.GetProcessById(parentPid);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

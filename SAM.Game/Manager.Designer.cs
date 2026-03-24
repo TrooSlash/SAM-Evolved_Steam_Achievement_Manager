@@ -63,6 +63,7 @@
             this._DisplayLabel = new System.Windows.Forms.ToolStripLabel();
             this._DisplayLockedOnlyButton = new System.Windows.Forms.ToolStripButton();
             this._DisplayUnlockedOnlyButton = new System.Windows.Forms.ToolStripButton();
+            this._HideProtectedButton = new System.Windows.Forms.ToolStripButton();
             this._MatchingStringLabel = new System.Windows.Forms.ToolStripLabel();
             this._MatchingStringTextBox = new System.Windows.Forms.ToolStripTextBox();
             this._StatisticsTabPage = new System.Windows.Forms.TabPage();
@@ -295,6 +296,7 @@
             this._DisplayLabel,
             this._DisplayLockedOnlyButton,
             this._DisplayUnlockedOnlyButton,
+            this._HideProtectedButton,
             _ToolStripSeparator2,
             this._MatchingStringLabel,
             this._MatchingStringTextBox});
@@ -362,7 +364,17 @@
             this._DisplayUnlockedOnlyButton.Size = new System.Drawing.Size(60, 22);
             this._DisplayUnlockedOnlyButton.Text = "unlocked";
             this._DisplayUnlockedOnlyButton.Click += new System.EventHandler(this.OnDisplayUncheckedOnly);
-            // 
+            //
+            // _HideProtectedButton
+            //
+            this._HideProtectedButton.CheckOnClick = true;
+            this._HideProtectedButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._HideProtectedButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._HideProtectedButton.Name = "_HideProtectedButton";
+            this._HideProtectedButton.Size = new System.Drawing.Size(90, 22);
+            this._HideProtectedButton.Text = "hide protected";
+            this._HideProtectedButton.Click += new System.EventHandler(this.OnHideProtectedClick);
+            //
             // _MatchingStringLabel
             // 
             this._MatchingStringLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
@@ -474,6 +486,7 @@
         private System.Windows.Forms.ToolStripLabel _DisplayLabel;
         private System.Windows.Forms.ToolStripButton _DisplayUnlockedOnlyButton;
         private System.Windows.Forms.ToolStripButton _DisplayLockedOnlyButton;
+        private System.Windows.Forms.ToolStripButton _HideProtectedButton;
         private System.Windows.Forms.ToolStripLabel _MatchingStringLabel;
         private System.Windows.Forms.ToolStripTextBox _MatchingStringTextBox;
         private System.Windows.Forms.ColumnHeader _AchievementUnlockTimeColumnHeader;

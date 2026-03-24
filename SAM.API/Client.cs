@@ -71,10 +71,20 @@ namespace SAM.API
                 throw new ClientInitializeException(ClientInitializeFailure.CreateSteamClient, "failed to create ISteamClient018");
             }
 
-            this._Pipe = this.SteamClient.CreateSteamPipe();
+            // Retry CreateSteamPipe — may fail transiently due to timing or IPC contention
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                this._Pipe = this.SteamClient.CreateSteamPipe();
+                if (this._Pipe != 0) break;
+                if (attempt < 3)
+                {
+                    ApiLogger.Warning($"CreateSteamPipe failed (attempt {attempt}/3), retrying in 500ms...");
+                    System.Threading.Thread.Sleep(500);
+                }
+            }
             if (this._Pipe == 0)
             {
-                ApiLogger.Error("Failed to create Steam pipe", null);
+                ApiLogger.Error("Failed to create Steam pipe after 3 attempts", null);
                 throw new ClientInitializeException(ClientInitializeFailure.CreateSteamPipe, "failed to create pipe");
             }
 

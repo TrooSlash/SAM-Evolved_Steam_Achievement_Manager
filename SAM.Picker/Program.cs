@@ -116,6 +116,8 @@ namespace SAM.Picker
                 try
                 {
                     client.Initialize(0);
+                    // Clear SteamAppId so child processes (SAM.Game) don't inherit "0"
+                    Environment.SetEnvironmentVariable("SteamAppId", null);
                     Serilog.Log.Information("Steam client initialized successfully");
                 }
                 catch (API.ClientInitializeException e)

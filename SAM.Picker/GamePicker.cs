@@ -52,6 +52,8 @@ namespace SAM.Picker
 
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
 
+        private HashSet<uint> _ProtectedGames = new HashSet<uint>();
+
         private bool _IsListView = true;
         private int _SortColumn = 0;
         private bool _SortAscending = true;
@@ -67,6 +69,7 @@ namespace SAM.Picker
             this._LogosAttempting = new();
             this._LogosAttempted = new();
             this._LogoQueue = new();
+            this._ProtectedGames = API.ProtectedGamesCache.Load();
 
             this.InitializeComponent();
 
@@ -505,10 +508,14 @@ namespace SAM.Picker
             this._RefreshGamesButton.Enabled = true;
             this.DownloadNextLogo();
             this.LoadAchievementsAsync();
+            this.ScanProtectedGamesAsync();
         }
 
         private void RefreshGames()
         {
+            // Reload protected games cache — SAM.Game may have updated it
+            this._ProtectedGames = API.ProtectedGamesCache.Load();
+
             var nameSearch = this._SearchGameTextBox.Text.Length > 0
                 ? this._SearchGameTextBox.Text
                 : null;
@@ -603,11 +610,14 @@ namespace SAM.Picker
             }
         }
 
-        private static string FormatAchievements(GameInfo game)
+        private string FormatAchievements(GameInfo game)
         {
             if (!game.AchievementsLoaded) return "\u23F3";
             if (game.AchievementsTotal == 0) return "\u2014";
-            return $"{game.AchievementsUnlocked}/{game.AchievementsTotal}";
+            string text = $"{game.AchievementsUnlocked}/{game.AchievementsTotal}";
+            if (this._ProtectedGames.Contains(game.Id))
+                text = "\U0001F512 " + text;
+            return text;
         }
 
         private void LoadAchievementsAsync()
@@ -741,6 +751,31 @@ namespace SAM.Picker
                     }
                 }
             }
+        }
+
+        private void ScanProtectedGamesAsync()
+        {
+            var appIds = new List<uint>();
+            foreach (var game in this._Games.Values)
+                appIds.Add(game.Id);
+
+            var worker = new BackgroundWorker();
+            worker.DoWork += (s, e) =>
+            {
+                e.Result = API.ProtectedGamesCache.ScanSteamSchemas(appIds);
+            };
+            worker.RunWorkerCompleted += (s, e) =>
+            {
+                if (e.Error != null || e.Result == null) return;
+                var scanned = (HashSet<uint>)e.Result;
+                if (!scanned.SetEquals(this._ProtectedGames))
+                {
+                    this._ProtectedGames = scanned;
+                    Log.Information("Protected games scan complete: {Count} games with protected achievements", scanned.Count);
+                    this.UpdateAchievementColumn();
+                }
+            };
+            worker.RunWorkerAsync();
         }
 
         private void SortFilteredGames()
@@ -1225,8 +1260,16 @@ namespace SAM.Picker
 
             try
             {
-                Environment.SetEnvironmentVariable("SAM_LANGUAGE", Localization.Current == Localization.Language.Russian ? "Russian" : "English");
-                Process.Start("SAM.Game.exe", info.Id.ToString(CultureInfo.InvariantCulture));
+                var psi = new ProcessStartInfo
+                {
+                    FileName = Path.Combine(Application.StartupPath, "SAM.Game.exe"),
+                    Arguments = info.Id.ToString(CultureInfo.InvariantCulture),
+                    WorkingDirectory = Application.StartupPath,
+                    UseShellExecute = false,
+                };
+                psi.EnvironmentVariables["SAM_LANGUAGE"] = Localization.Current == Localization.Language.Russian ? "Russian" : "English";
+                psi.EnvironmentVariables["SteamAppId"] = "";
+                Process.Start(psi);
             }
             catch (Win32Exception ex)
             {
@@ -1548,12 +1591,14 @@ namespace SAM.Picker
                     {
                         var psi = new System.Diagnostics.ProcessStartInfo
                         {
-                            FileName = "SAM.Game.exe",
+                            FileName = Path.Combine(Application.StartupPath, "SAM.Game.exe"),
                             Arguments = $"{game.Id} --unlock-all",
+                            WorkingDirectory = Application.StartupPath,
                             UseShellExecute = false,
                             CreateNoWindow = true,
                             RedirectStandardOutput = true,
                         };
+                        psi.EnvironmentVariables["SteamAppId"] = "";
 
                         using (var proc = System.Diagnostics.Process.Start(psi))
                         {

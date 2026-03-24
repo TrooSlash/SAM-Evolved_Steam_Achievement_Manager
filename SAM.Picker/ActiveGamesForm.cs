@@ -245,14 +245,17 @@ namespace SAM.Picker
             if (entry.Process != null) return;
             try
             {
-                Environment.SetEnvironmentVariable("SAM_LANGUAGE", Localization.Current == Localization.Language.Russian ? "Russian" : "English");
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "SAM.Game.exe",
+                    FileName = Path.Combine(Application.StartupPath, "SAM.Game.exe"),
                     Arguments = $"{entry.Info.Id.ToString(CultureInfo.InvariantCulture)} --idle",
+                    WorkingDirectory = Application.StartupPath,
                     WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
                 };
+                psi.EnvironmentVariables["SAM_LANGUAGE"] = Localization.Current == Localization.Language.Russian ? "Russian" : "English";
+                psi.EnvironmentVariables["SteamAppId"] = "";
                 entry.Process = Process.Start(psi);
                 Log.Information("Launched idle process for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
             }
@@ -346,14 +349,17 @@ namespace SAM.Picker
             {
                 try
                 {
-                    Environment.SetEnvironmentVariable("SAM_LANGUAGE", Localization.Current == Localization.Language.Russian ? "Russian" : "English");
                     var psi = new ProcessStartInfo
                     {
-                        FileName = "SAM.Game.exe",
+                        FileName = Path.Combine(Application.StartupPath, "SAM.Game.exe"),
                         Arguments = $"{entry.Info.Id.ToString(CultureInfo.InvariantCulture)} --idle",
+                        WorkingDirectory = Application.StartupPath,
                         WindowStyle = ProcessWindowStyle.Hidden,
-                        CreateNoWindow = true
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
                     };
+                    psi.EnvironmentVariables["SAM_LANGUAGE"] = Localization.Current == Localization.Language.Russian ? "Russian" : "English";
+                    psi.EnvironmentVariables["SteamAppId"] = "";
                     entry.Process = Process.Start(psi);
                     entry.StartTime = DateTime.Now;
                     entry.IsPaused = false;
