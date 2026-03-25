@@ -60,4 +60,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SAM.API\SAM.API.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\SAM.Picker\DarkPalette.cs" Link="DarkPalette.cs" />
+  </ItemGroup>
 </Project>

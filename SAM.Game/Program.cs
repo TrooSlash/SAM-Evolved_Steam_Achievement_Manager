@@ -25,7 +25,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security;
 using System.Security.Principal;
 using System.Threading;
 using System.Windows.Forms;
@@ -37,41 +36,7 @@ namespace SAM.Game
         [STAThread]
         public static void Main(string[] args)
         {
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
-            {
-                var name = new AssemblyName(e.Name).Name + ".dll";
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lib", name);
-                if (File.Exists(path) == false)
-                {
-                    return null;
-                }
-
-                try
-                {
-                    return Assembly.LoadFrom(path);
-                }
-                catch (FileLoadException)
-                {
-                    // Some users launch from ZIP/OneDrive extracted folders where MOTW blocks LoadFrom.
-                }
-                catch (NotSupportedException)
-                {
-                    // .NET can reject assemblies treated as remote sources.
-                }
-                catch (SecurityException)
-                {
-                    // Fallback to in-memory load when file trust metadata blocks direct load.
-                }
-
-                try
-                {
-                    return Assembly.Load(File.ReadAllBytes(path));
-                }
-                catch
-                {
-                    return null;
-                }
-            };
+            API.Bootstrap.RegisterAssemblyResolver();
 
             long appId;
 

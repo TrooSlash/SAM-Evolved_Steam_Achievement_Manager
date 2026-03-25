@@ -21,7 +21,6 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -45,10 +44,7 @@ namespace SAM.Picker
         private readonly Dictionary<uint, GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
 
-        private readonly object _LogoLock;
-        private readonly HashSet<string> _LogosAttempting;
-        private readonly HashSet<string> _LogosAttempted;
-        private readonly ConcurrentQueue<GameInfo> _LogoQueue;
+        private readonly LogoDownloadService _LogoService;
 
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
 
@@ -58,17 +54,13 @@ namespace SAM.Picker
         private int _SortColumn = 0;
         private bool _SortAscending = true;
         private bool _SuppressItemCheck = false;
-        private int _ActiveLogoDownloads;
-        private const int MaxParallelLogoDownloads = 6;
 
         public GamePicker(API.Client client)
         {
             this._Games = new();
             this._FilteredGames = new();
-            this._LogoLock = new();
-            this._LogosAttempting = new();
-            this._LogosAttempted = new();
-            this._LogoQueue = new();
+            this._LogoService = new LogoDownloadService();
+            this._LogoService.LogoReady += OnLogoServiceReady;
             this._ProtectedGames = API.ProtectedGamesCache.Load();
 
             this.InitializeComponent();
@@ -968,106 +960,45 @@ namespace SAM.Picker
 
         private void DownloadNextLogo()
         {
-            int remaining = 0;
-            bool hideStatus = false;
-
-            lock (this._LogoLock)
+            this._LogoService.ProcessQueue(info =>
             {
-                while (this._ActiveLogoDownloads < MaxParallelLogoDownloads)
+                if (this._IsListView) return true;
+                if (info.Item == null) return false;
+                try
                 {
-                    GameInfo info = DequeueNextLogo();
-                    if (info == null)
-                    {
-                        if (this._ActiveLogoDownloads == 0)
-                            hideStatus = true;
-                        break;
-                    }
-
-                    this._ActiveLogoDownloads++;
-                    this._LogosAttempted.Add(info.ImageUrl);
-
-                    var capturedInfo = info;
-                    System.Threading.Tasks.Task.Run(() => DownloadLogoTask(capturedInfo));
+                    return this._FilteredGames.Contains(info) &&
+                           info.Item.Bounds.IntersectsWith(this._GameListView.ClientRectangle);
                 }
+                catch (ArgumentOutOfRangeException) { return false; }
+            });
 
-                remaining = this._ActiveLogoDownloads + this._LogoQueue.Count;
-            }
-
-            // UI operations outside lock to prevent potential deadlock
-            if (hideStatus)
-            {
-                this._DownloadStatusLabel.Visible = false;
-            }
-            else if (remaining > 0)
+            int remaining = this._LogoService.Remaining;
+            if (remaining > 0)
             {
                 this._DownloadStatusLabel.Text = Localization.Get("DownloadingIcons", remaining);
                 this._DownloadStatusLabel.Visible = true;
             }
-        }
-
-        private GameInfo DequeueNextLogo()
-        {
-            // Must be called within _LogoLock
-            while (true)
+            else
             {
-                if (this._LogoQueue.TryDequeue(out var info) == false)
-                    return null;
-
-                if (info.Item == null && !this._IsListView)
-                    continue;
-
-                if (!this._IsListView)
-                {
-                    Rectangle itemBounds;
-                    try { itemBounds = info.Item.Bounds; }
-                    catch (ArgumentOutOfRangeException) { continue; }
-
-                    if (this._FilteredGames.Contains(info) == false ||
-                        itemBounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
-                    {
-                        this._LogosAttempting.Remove(info.ImageUrl);
-                        continue;
-                    }
-                }
-
-                return info;
+                this._DownloadStatusLabel.Visible = false;
             }
         }
 
-        private void DownloadLogoTask(GameInfo info)
+        private void OnLogoServiceReady(object sender, LogoReadyEventArgs e)
         {
-            Bitmap bitmap = null;
-            try
-            {
-                using (WebClient downloader = new())
-                {
-                    var data = downloader.DownloadData(new Uri(info.ImageUrl));
-                    using (MemoryStream stream = new(data, false))
-                    {
-                        bitmap = new Bitmap(stream);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Debug(ex, "Failed to download logo for appId {AppId} from {Url}", info.Id, info.ImageUrl);
-            }
-
             try
             {
                 if (this.IsHandleCreated)
-                    this.BeginInvoke((Action)(() => OnLogoDownloadComplete(info, bitmap)));
+                    this.BeginInvoke((Action)(() => OnLogoDownloadComplete(e.Game, e.Bitmap)));
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "Failed to invoke OnLogoDownloadComplete for appId {AppId}", info.Id);
+                Log.Warning(ex, "Failed to invoke OnLogoDownloadComplete for appId {AppId}", e.Game.Id);
             }
         }
 
         private void OnLogoDownloadComplete(GameInfo info, Bitmap bitmap)
         {
-            lock (this._LogoLock)
-                this._ActiveLogoDownloads--;
 
             if (bitmap == null)
             {
@@ -1150,35 +1081,19 @@ namespace SAM.Picker
         private void AddGameToLogoQueue(GameInfo info)
         {
             if (info.ImageIndex > 0)
-            {
                 return;
-            }
 
             var imageUrl = GetGameImageUrl(info.Id);
-            if (string.IsNullOrEmpty(imageUrl) == true)
-            {
+            if (string.IsNullOrEmpty(imageUrl))
                 return;
-            }
 
             info.ImageUrl = imageUrl;
 
             int imageIndex = this._LogoImageList.Images.IndexOfKey(imageUrl);
             if (imageIndex >= 0)
-            {
                 info.ImageIndex = imageIndex;
-            }
             else
-            {
-                lock (this._LogoLock)
-                {
-                    if (this._LogosAttempting.Contains(imageUrl) == false &&
-                        this._LogosAttempted.Contains(imageUrl) == false)
-                    {
-                        this._LogosAttempting.Add(imageUrl);
-                        this._LogoQueue.Enqueue(info);
-                    }
-                }
-            }
+                this._LogoService.Enqueue(info);
         }
 
         private bool OwnsGame(uint id)
@@ -1219,13 +1134,7 @@ namespace SAM.Picker
         private void AddGames()
         {
             this._Games.Clear();
-            // Clear in-progress attempts but keep _LogosAttempted intact
-            // so cached images in _LogoImageList are reused via AddGameToLogoQueue
-            lock (this._LogoLock)
-            {
-                this._LogosAttempting.Clear();
-            }
-            while (this._LogoQueue.TryDequeue(out var _unused)) { }
+            this._LogoService.ClearQueue();
             this._RefreshGamesButton.Enabled = false;
             this._ListWorker.RunWorkerAsync();
         }
@@ -1317,14 +1226,7 @@ namespace SAM.Picker
                 return;
             }
 
-            while (this._LogoQueue.TryDequeue(out var logo) == true)
-            {
-                // clear the download queue because we will be showing only one app
-                lock (this._LogoLock)
-                {
-                    this._LogosAttempted.Remove(logo.ImageUrl);
-                }
-            }
+            this._LogoService.ClearQueue();
 
             this._AddGameTextBox.Text = "";
             this._Games.Clear();
