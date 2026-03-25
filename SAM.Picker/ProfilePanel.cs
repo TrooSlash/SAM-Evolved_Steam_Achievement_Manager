@@ -176,22 +176,7 @@ namespace SAM.Picker
                 int barHeight = 8;
                 int barY = badgeY + 4;
 
-                // XP progress bar - correct formula:
-                // _xp = total XP earned (player_xp)
-                // _xpNeededCurrentLevel = XP threshold to REACH current level (player_xp_needed_current_level)
-                // _xpNeeded = XP remaining to next level (player_xp_needed_to_level_up)
-                // XP earned THIS level = _xp - _xpNeededCurrentLevel
-                // XP total for THIS level = xpEarned + _xpNeeded
-                int xpEarnedThisLevel = _xpNeededCurrentLevel > 0
-                    ? _xp - _xpNeededCurrentLevel
-                    : 0;
-                int xpTotalForLevel = xpEarnedThisLevel + _xpNeeded;
-                float progress = xpTotalForLevel > 0
-                    ? (float)xpEarnedThisLevel / xpTotalForLevel
-                    : 0f;
-                // Clamp progress to [0, 1] in case of edge cases
-                if (progress < 0) progress = 0;
-                if (progress > 1) progress = 1;
+                float progress = CalculateXpProgress(_xp, _xpNeededCurrentLevel, _xpNeeded);
                 int fillWidth = (int)(barWidth * progress);
 
                 // Draw progress bar background (unfilled portion)
@@ -216,6 +201,8 @@ namespace SAM.Picker
                 }
 
                 // XP text - show earned / total for current level
+                int xpEarnedThisLevel = _xpNeededCurrentLevel > 0 ? _xp - _xpNeededCurrentLevel : 0;
+                int xpTotalForLevel = xpEarnedThisLevel + _xpNeeded;
                 string xpText = string.Format("XP: {0}/{1}", xpEarnedThisLevel, xpTotalForLevel);
                 using (var xpFont = new Font("Segoe UI", 8f))
                 using (var xpBrush = new SolidBrush(DarkTheme.TextSecondary))
@@ -232,6 +219,19 @@ namespace SAM.Picker
                     g.DrawString(badgeCountText, bcFont, bcBrush, badgeCountX, badgeY + 6);
                 }
             }
+        }
+        internal static float CalculateXpProgress(int xp, int xpNeededCurrentLevel, int xpNeeded)
+        {
+            int xpEarnedThisLevel = xpNeededCurrentLevel > 0
+                ? xp - xpNeededCurrentLevel
+                : 0;
+            int xpTotalForLevel = xpEarnedThisLevel + xpNeeded;
+            float progress = xpTotalForLevel > 0
+                ? (float)xpEarnedThisLevel / xpTotalForLevel
+                : 0f;
+            if (progress < 0) progress = 0;
+            if (progress > 1) progress = 1;
+            return progress;
         }
     }
 }

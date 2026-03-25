@@ -735,12 +735,15 @@ namespace SAM.Picker
             int nowMin = now.Hour * 60 + now.Minute;
             int startMin = _Settings.ScheduleStartHour * 60 + _Settings.ScheduleStartMinute;
             int endMin = _Settings.ScheduleEndHour * 60 + _Settings.ScheduleEndMinute;
+            return IsWithinSchedule(nowMin, startMin, endMin);
+        }
 
-            // Use <= for endMin to include the final minute of the schedule
-            if (startMin <= endMin)
-                return nowMin >= startMin && nowMin <= endMin;
+        internal static bool IsWithinSchedule(int nowMinutes, int startMinutes, int endMinutes)
+        {
+            if (startMinutes <= endMinutes)
+                return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
             else
-                return nowMin >= startMin || nowMin <= endMin;
+                return nowMinutes >= startMinutes || nowMinutes <= endMinutes;
         }
 
         private void AutoStop()

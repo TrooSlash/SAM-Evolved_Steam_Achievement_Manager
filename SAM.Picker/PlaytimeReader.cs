@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using Serilog;
@@ -47,6 +48,13 @@ namespace SAM.Picker
                 Log.Warning(ex, "Failed to parse playtime data from {ConfigPath}", configPath);
             }
 
+            return result;
+        }
+
+        internal static Dictionary<uint, AppLocalData> ParseVdf(string content)
+        {
+            var result = new Dictionary<uint, AppLocalData>();
+            ParseAppsSection(content, result);
             return result;
         }
 
@@ -169,7 +177,7 @@ namespace SAM.Picker
             if (minutes < 60)
                 return $"{minutes} min";
             double hours = minutes / 60.0;
-            return $"{hours:F1} hrs";
+            return string.Format(CultureInfo.InvariantCulture, "{0:F1} hrs", hours);
         }
 
         public static string FormatLastPlayed(long unixTimestamp)
