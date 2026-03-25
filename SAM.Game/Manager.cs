@@ -311,9 +311,10 @@ namespace SAM.Game
                 Bitmap bitmap;
                 try
                 {
-                    // Bitmap requires the stream to remain open, so don't dispose it
-                    MemoryStream stream = new(e.Result, false);
-                    bitmap = new(stream);
+                    using (var stream = new MemoryStream(e.Result, false))
+                    {
+                        bitmap = new Bitmap(stream);
+                    }
                 }
                 catch (Exception ex)
                 {

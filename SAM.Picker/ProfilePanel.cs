@@ -43,6 +43,7 @@ namespace SAM.Picker
 
         public void SetAvatar(Bitmap avatar)
         {
+            _avatar?.Dispose();
             _avatar = avatar;
             Invalidate();
         }

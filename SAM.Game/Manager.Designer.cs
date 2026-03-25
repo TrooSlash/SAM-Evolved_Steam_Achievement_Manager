@@ -237,7 +237,7 @@
             // _AchievementListView
             // 
             this._AchievementListView.Activation = System.Windows.Forms.ItemActivation.OneClick;
-            this._AchievementListView.BackColor = System.Drawing.Color.Black;
+            this._AchievementListView.BackColor = DarkTheme.DarkBackground;
             this._AchievementListView.BackgroundImageTiled = true;
             this._AchievementListView.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this._AchievementListView.CheckBoxes = false;
@@ -247,7 +247,7 @@
             this._AchievementUnlockTimeColumnHeader,
             this._AchievementGlobalPercentColumnHeader});
             this._AchievementListView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._AchievementListView.ForeColor = System.Drawing.Color.White;
+            this._AchievementListView.ForeColor = DarkTheme.Text;
             this._AchievementListView.FullRowSelect = true;
             this._AchievementListView.GridLines = false;
             this._AchievementListView.HideSelection = false;
@@ -269,22 +269,22 @@
             // _AchievementNameColumnHeader
             // 
             this._AchievementNameColumnHeader.Text = "Name";
-            this._AchievementNameColumnHeader.Width = 200;
+            this._AchievementNameColumnHeader.Width = 160;
             // 
             // _AchievementDescriptionColumnHeader
             // 
             this._AchievementDescriptionColumnHeader.Text = "Description";
-            this._AchievementDescriptionColumnHeader.Width = 300;
+            this._AchievementDescriptionColumnHeader.Width = 230;
             // 
             // _AchievementUnlockTimeColumnHeader
             // 
             this._AchievementUnlockTimeColumnHeader.Text = "Unlock Time";
-            this._AchievementUnlockTimeColumnHeader.Width = 160;
+            this._AchievementUnlockTimeColumnHeader.Width = 140;
             // 
             // _AchievementGlobalPercentColumnHeader
             // 
             this._AchievementGlobalPercentColumnHeader.Text = "Global %";
-            this._AchievementGlobalPercentColumnHeader.Width = 80;
+            this._AchievementGlobalPercentColumnHeader.Width = 70;
             // 
             // _AchievementsToolStrip
             // 
