@@ -41,11 +41,10 @@
             this._AddGameButton = new System.Windows.Forms.ToolStripButton();
             this._FindGamesLabel = new System.Windows.Forms.ToolStripLabel();
             this._SearchGameTextBox = new System.Windows.Forms.ToolStripTextBox();
-            this._FilterDropDownButton = new System.Windows.Forms.ToolStripDropDownButton();
-            this._FilterGamesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this._FilterDemosMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this._FilterModsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this._FilterJunkMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this._FilterGamesButton = new System.Windows.Forms.ToolStripButton();
+            this._FilterDemosButton = new System.Windows.Forms.ToolStripButton();
+            this._FilterModsButton = new System.Windows.Forms.ToolStripButton();
+            this._FilterJunkButton = new System.Windows.Forms.ToolStripButton();
             this._SettingsButton = new System.Windows.Forms.ToolStripButton();
             this._UnlockAllGamesButton = new System.Windows.Forms.ToolStripButton();
             this._IdleGamesButton = new System.Windows.Forms.ToolStripButton();
@@ -91,6 +90,9 @@
             //
             // _PickerToolStrip
             //
+            var _ToolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            _ToolStripSeparator3.Name = "_ToolStripSeparator3";
+            _ToolStripSeparator3.Size = new System.Drawing.Size(6, 25);
             this._PickerToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._RefreshGamesButton,
             this._IdleGamesButton,
@@ -100,7 +102,11 @@
             _ToolStripSeparator2,
             this._FindGamesLabel,
             this._SearchGameTextBox,
-            this._FilterDropDownButton,
+            _ToolStripSeparator3,
+            this._FilterGamesButton,
+            this._FilterDemosButton,
+            this._FilterModsButton,
+            this._FilterJunkButton,
             this._SettingsButton,
             this._UnlockAllGamesButton});
             this._PickerToolStrip.Location = new System.Drawing.Point(0, 0);
@@ -148,53 +154,38 @@
             this._SearchGameTextBox.Size = new System.Drawing.Size(100, 25);
             this._SearchGameTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnFilterUpdate);
             //
-            // _FilterDropDownButton
+            // _FilterGamesButton
             //
-            this._FilterDropDownButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this._FilterDropDownButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this._FilterGamesMenuItem,
-            this._FilterDemosMenuItem,
-            this._FilterModsMenuItem,
-            this._FilterJunkMenuItem});
-            this._FilterDropDownButton.Image = global::SAM.Picker.Resources.Filter;
-            this._FilterDropDownButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this._FilterDropDownButton.Name = "_FilterDropDownButton";
-            this._FilterDropDownButton.Size = new System.Drawing.Size(29, 22);
-            this._FilterDropDownButton.Text = "Game filtering";
+            this._FilterGamesButton.CheckOnClick = true;
+            this._FilterGamesButton.Checked = true;
+            this._FilterGamesButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._FilterGamesButton.Name = "_FilterGamesButton";
+            this._FilterGamesButton.Text = "Games";
+            this._FilterGamesButton.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             //
-            // _FilterGamesMenuItem
+            // _FilterDemosButton
             //
-            this._FilterGamesMenuItem.Checked = true;
-            this._FilterGamesMenuItem.CheckOnClick = true;
-            this._FilterGamesMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
-            this._FilterGamesMenuItem.Name = "_FilterGamesMenuItem";
-            this._FilterGamesMenuItem.Size = new System.Drawing.Size(180, 22);
-            this._FilterGamesMenuItem.Text = "Show &games";
-            this._FilterGamesMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
+            this._FilterDemosButton.CheckOnClick = true;
+            this._FilterDemosButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._FilterDemosButton.Name = "_FilterDemosButton";
+            this._FilterDemosButton.Text = "Demos";
+            this._FilterDemosButton.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             //
-            // _FilterDemosMenuItem
+            // _FilterModsButton
             //
-            this._FilterDemosMenuItem.CheckOnClick = true;
-            this._FilterDemosMenuItem.Name = "_FilterDemosMenuItem";
-            this._FilterDemosMenuItem.Size = new System.Drawing.Size(180, 22);
-            this._FilterDemosMenuItem.Text = "Show &demos";
-            this._FilterDemosMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
+            this._FilterModsButton.CheckOnClick = true;
+            this._FilterModsButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._FilterModsButton.Name = "_FilterModsButton";
+            this._FilterModsButton.Text = "Mods";
+            this._FilterModsButton.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             //
-            // _FilterModsMenuItem
+            // _FilterJunkButton
             //
-            this._FilterModsMenuItem.CheckOnClick = true;
-            this._FilterModsMenuItem.Name = "_FilterModsMenuItem";
-            this._FilterModsMenuItem.Size = new System.Drawing.Size(180, 22);
-            this._FilterModsMenuItem.Text = "Show &mods";
-            this._FilterModsMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
-            //
-            // _FilterJunkMenuItem
-            //
-            this._FilterJunkMenuItem.CheckOnClick = true;
-            this._FilterJunkMenuItem.Name = "_FilterJunkMenuItem";
-            this._FilterJunkMenuItem.Size = new System.Drawing.Size(180, 22);
-            this._FilterJunkMenuItem.Text = "Show &junk";
-            this._FilterJunkMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
+            this._FilterJunkButton.CheckOnClick = true;
+            this._FilterJunkButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._FilterJunkButton.Name = "_FilterJunkButton";
+            this._FilterJunkButton.Text = "Junk";
+            this._FilterJunkButton.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             //
             // _SettingsButton
             //
@@ -328,11 +319,10 @@
         private System.Windows.Forms.ToolStripButton _RefreshGamesButton;
         private System.Windows.Forms.ToolStripTextBox _AddGameTextBox;
         private System.Windows.Forms.ToolStripButton _AddGameButton;
-        private System.Windows.Forms.ToolStripDropDownButton _FilterDropDownButton;
-        private System.Windows.Forms.ToolStripMenuItem _FilterGamesMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem _FilterJunkMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem _FilterDemosMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem _FilterModsMenuItem;
+        private System.Windows.Forms.ToolStripButton _FilterGamesButton;
+        private System.Windows.Forms.ToolStripButton _FilterDemosButton;
+        private System.Windows.Forms.ToolStripButton _FilterModsButton;
+        private System.Windows.Forms.ToolStripButton _FilterJunkButton;
         private System.Windows.Forms.StatusStrip _PickerStatusStrip;
         private System.Windows.Forms.ToolStripStatusLabel _DownloadStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel _PickerStatusLabel;

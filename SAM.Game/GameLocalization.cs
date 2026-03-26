@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SAM.Game
@@ -40,17 +41,17 @@ namespace SAM.Game
             { "Extra", "Extra" },
 
             // Messages
-            { "DownloadingIcons", "Downloading {0} icons..." },
+            { "DownloadingIcons", "Downloading {0} {1}..." },
             { "ErrorRetrievingStats", "Error while retrieving stats: {0}" },
             { "FailedLoadSchema", "Failed to load schema." },
             { "ErrorAchievementsRetrieval", "Error when handling achievements retrieval." },
             { "ErrorStatsRetrieval", "Error when handling stats retrieval." },
-            { "RetrievedStats", "Retrieved {0} achievements and {1} statistics." },
+            { "RetrievedStats", "Retrieved {0} {2} and {1} {3}." },
             { "RetrievingStats", "Retrieving stat information..." },
             { "ErrorSettingState", "An error occurred while setting the state for {0}, aborting store." },
             { "ErrorSettingValue", "An error occurred while setting the value for {0}, aborting store." },
             { "ErrorStoring", "An error occurred while storing, aborting." },
-            { "StoredStats", "Stored {0} achievements and {1} statistics." },
+            { "StoredStats", "Stored {0} {2} and {1} {3}." },
             { "ConfirmResetStats", "Are you absolutely sure you want to reset stats?" },
             { "ConfirmResetAchievements", "Do you want to reset achievements too?" },
             { "ReallyReallySure", "Really really sure?" },
@@ -110,17 +111,17 @@ namespace SAM.Game
             { "Extra", "Дополнительно" },
 
             // Messages
-            { "DownloadingIcons", "Загрузка {0} иконок..." },
+            { "DownloadingIcons", "Загрузка {0} {1}..." },
             { "ErrorRetrievingStats", "Ошибка при получении статистики: {0}" },
             { "FailedLoadSchema", "Не удалось загрузить схему." },
             { "ErrorAchievementsRetrieval", "Ошибка при получении достижений." },
             { "ErrorStatsRetrieval", "Ошибка при получении статистики." },
-            { "RetrievedStats", "Получено {0} достижений и {1} статистик." },
+            { "RetrievedStats", "Получено {0} {2} и {1} {3}." },
             { "RetrievingStats", "Получение статистики..." },
             { "ErrorSettingState", "Ошибка при установке состояния для {0}, сохранение прервано." },
             { "ErrorSettingValue", "Ошибка при установке значения для {0}, сохранение прервано." },
             { "ErrorStoring", "Ошибка при сохранении, операция прервана." },
-            { "StoredStats", "Сохранено {0} достижений и {1} статистик." },
+            { "StoredStats", "Сохранено {0} {2} и {1} {3}." },
             { "ConfirmResetStats", "Вы уверены, что хотите сбросить статистику?" },
             { "ConfirmResetAchievements", "Сбросить достижения тоже?" },
             { "ReallyReallySure", "Вы точно уверены?" },
@@ -154,6 +155,19 @@ namespace SAM.Game
             { "LockAllConfirm", "Вы уверены, что хотите заблокировать все достижения?\nЭто снимет отметку со всех достижений в списке." },
             { "Confirm", "Подтверждение" },
         };
+
+        public static string Plural(int count, string one, string few, string many)
+        {
+            if (_current == Language.English)
+                return count == 1 ? one : many;
+
+            int abs = Math.Abs(count) % 100;
+            int last = abs % 10;
+            if (abs > 10 && abs < 20) return many;
+            if (last > 1 && last < 5) return few;
+            if (last == 1) return one;
+            return many;
+        }
 
         public static string Get(string key)
         {

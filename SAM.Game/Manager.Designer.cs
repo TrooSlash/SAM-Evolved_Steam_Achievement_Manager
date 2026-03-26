@@ -262,6 +262,7 @@
             this._AchievementListView.UseCompatibleStateImageBehavior = false;
             this._AchievementListView.View = System.Windows.Forms.View.Details;
             this._AchievementListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.OnAchievementMouseClick);
+            this._AchievementListView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.OnAchievementMouseDoubleClick);
             this._AchievementListView.DrawItem += new System.Windows.Forms.DrawListViewItemEventHandler(this.OnDrawAchievementItem);
             this._AchievementListView.DrawSubItem += new System.Windows.Forms.DrawListViewSubItemEventHandler(this.OnDrawAchievementSubItem);
             this._AchievementListView.DrawColumnHeader += new System.Windows.Forms.DrawListViewColumnHeaderEventHandler(this.OnDrawAchievementColumnHeader);

@@ -107,6 +107,11 @@ namespace SAM.Picker
             _GamesList.Columns.Add(Localization.Get("ColElapsed"), 80, HorizontalAlignment.Center);
             _GamesList.Columns.Add(Localization.Get("ColAction"), 100, HorizontalAlignment.Center);
             _GamesList.MouseClick += OnListClick;
+            _GamesList.AllowDrop = true;
+            _GamesList.ItemDrag += OnListItemDrag;
+            _GamesList.DragEnter += (s, e) => e.Effect = DragDropEffects.Move;
+            _GamesList.DragOver += OnListDragOver;
+            _GamesList.DragDrop += OnListDragDrop;
 
             var buttonPanel = new Panel
             {
@@ -341,6 +346,52 @@ namespace SAM.Picker
                 Log.Debug("User clicked Stop for {GameName} (AppId={AppId})", entry.Info.Name, entry.Info.Id);
                 StopGame(entry);
             }
+        }
+
+        private void OnListItemDrag(object sender, ItemDragEventArgs e)
+        {
+            if (e.Item is ListViewItem item)
+            {
+                _GamesList.DoDragDrop(item, DragDropEffects.Move);
+            }
+        }
+
+        private void OnListDragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Move;
+            var pt = _GamesList.PointToClient(new Point(e.X, e.Y));
+            var target = _GamesList.GetItemAt(pt.X, pt.Y);
+            if (target != null)
+            {
+                target.EnsureVisible();
+            }
+        }
+
+        private void OnListDragDrop(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(typeof(ListViewItem))) return;
+
+            var draggedItem = (ListViewItem)e.Data.GetData(typeof(ListViewItem));
+            var pt = _GamesList.PointToClient(new Point(e.X, e.Y));
+            var targetItem = _GamesList.GetItemAt(pt.X, pt.Y);
+
+            if (targetItem == null || targetItem == draggedItem) return;
+
+            int oldIndex = draggedItem.Index;
+            int newIndex = targetItem.Index;
+
+            // Update _Entries list order
+            var entry = _Entries[oldIndex];
+            _Entries.RemoveAt(oldIndex);
+            _Entries.Insert(newIndex, entry);
+
+            // Update ListView
+            _GamesList.Items.RemoveAt(oldIndex);
+            _GamesList.Items.Insert(newIndex, draggedItem);
+            draggedItem.Selected = true;
+
+            Log.Debug("Game reordered: {GameName} moved from position {Old} to {New}",
+                entry.Info.Name, oldIndex, newIndex);
         }
 
         private void TogglePause(GameEntry entry)

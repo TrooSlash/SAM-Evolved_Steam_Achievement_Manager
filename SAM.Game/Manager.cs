@@ -346,7 +346,8 @@ namespace SAM.Game
                 return;
             }
 
-            this._DownloadStatusLabel.Text = GameLocalization.Get("DownloadingIcons", this._IconQueue.Count);
+            this._DownloadStatusLabel.Text = GameLocalization.Get("DownloadingIcons", this._IconQueue.Count,
+                GameLocalization.Plural(this._IconQueue.Count, "icon", "icons", "icons"));
             this._DownloadStatusLabel.Visible = true;
 
             var info = this._IconQueue[0];
@@ -651,7 +652,9 @@ namespace SAM.Game
                     MessageBoxIcon.Information);
             }
 
-            this._GameStatusLabel.Text = GameLocalization.Get("RetrievedStats", totalAchievements, this._StatisticsDataGridView.Rows.Count);
+            this._GameStatusLabel.Text = GameLocalization.Get("RetrievedStats", totalAchievements, this._StatisticsDataGridView.Rows.Count,
+                GameLocalization.Plural(totalAchievements, "achievement", "achievements", "achievements"),
+                GameLocalization.Plural(this._StatisticsDataGridView.Rows.Count, "statistic", "statistics", "statistics"));
             this.EnableInput();
         }
 
@@ -1110,7 +1113,9 @@ namespace SAM.Game
 
             MessageBox.Show(
                 this,
-                GameLocalization.Get("StoredStats", achievements, stats),
+                GameLocalization.Get("StoredStats", achievements, stats,
+                    GameLocalization.Plural(achievements, "achievement", "achievements", "achievements"),
+                    GameLocalization.Plural(stats, "statistic", "statistics", "statistics")),
                 GameLocalization.Get("Information"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
@@ -1287,6 +1292,33 @@ namespace SAM.Game
                     Log.Debug("Achievement toggled: {Name} -> {State}", info.Id, info.IsCheckedInUI ? "unlocked" : "locked");
                     this._AchievementListView.Invalidate();
                 }
+            }
+        }
+
+        private void OnAchievementMouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            var hit = this._AchievementListView.HitTest(e.Location);
+            if (hit.Item == null) return;
+            if (this._IsUpdatingAchievementList) return;
+
+            if (this._IsVacProtected && !this._VacClickWarned)
+            {
+                var result = MessageBox.Show(
+                    this,
+                    GameLocalization.Get("VacClickWarning"),
+                    "⚠ " + GameLocalization.Get("VacDetected"),
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+                if (result == DialogResult.No) return;
+                this._VacClickWarned = true;
+            }
+
+            if (hit.Item.Tag is Stats.AchievementInfo info)
+            {
+                if ((info.Permission & 3) != 0) return;
+                info.IsCheckedInUI = !info.IsCheckedInUI;
+                Log.Debug("Achievement toggled (double-click): {Name} -> {State}", info.Id, info.IsCheckedInUI ? "unlocked" : "locked");
+                this._AchievementListView.Invalidate();
             }
         }
 

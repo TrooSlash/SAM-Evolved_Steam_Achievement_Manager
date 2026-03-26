@@ -451,7 +451,8 @@ namespace SAM.Picker
                 {
                     this.BeginInvoke((Action)(() =>
                         this._PickerStatusLabel.Text = string.Format(
-                            Localization.Get("ApiGamesFound"), added)));
+                            Localization.Get("ApiGamesFound"), added,
+                            Localization.Plural(added, "game", "games", "games"))));
                 }
             }
             catch (Exception ex)
@@ -512,10 +513,10 @@ namespace SAM.Picker
                 ? this._SearchGameTextBox.Text
                 : null;
 
-            var wantNormals = this._FilterGamesMenuItem.Checked == true;
-            var wantDemos = this._FilterDemosMenuItem.Checked == true;
-            var wantMods = this._FilterModsMenuItem.Checked == true;
-            var wantJunk = this._FilterJunkMenuItem.Checked == true;
+            var wantNormals = this._FilterGamesButton.Checked == true;
+            var wantDemos = this._FilterDemosButton.Checked == true;
+            var wantMods = this._FilterModsButton.Checked == true;
+            var wantJunk = this._FilterJunkButton.Checked == true;
 
             this._FilteredGames.Clear();
             foreach (var info in this._Games.Values)
@@ -594,8 +595,12 @@ namespace SAM.Picker
             {
                 this._GameListView.VirtualListSize = this._FilteredGames.Count;
             }
+            var shown = this._GameListView.Items.Count;
+            var total = this._Games.Count;
             this._PickerStatusLabel.Text =
-                Localization.Get("DisplayingGames", this._GameListView.Items.Count, this._Games.Count);
+                Localization.Get("DisplayingGames", shown, total,
+                    Localization.Plural(shown, "game", "games", "games"),
+                    Localization.Plural(total, "game", "games", "games"));
 
             if (this._GameListView.Items.Count > 0)
             {
@@ -721,7 +726,8 @@ namespace SAM.Picker
                 {
                     UpdateAchievementColumn();
                     this._PickerStatusLabel.Text = string.Format(
-                        Localization.Get("AchievementsLoaded"), total);
+                        Localization.Get("AchievementsLoaded"), total,
+                        Localization.Plural(total, "game", "games", "games"));
                     Log.Information("LoadAchievementsAsync completed for {TotalGames} games", total);
                 }
                 else
@@ -975,7 +981,8 @@ namespace SAM.Picker
             int remaining = this._LogoService.Remaining;
             if (remaining > 0)
             {
-                this._DownloadStatusLabel.Text = Localization.Get("DownloadingIcons", remaining);
+                this._DownloadStatusLabel.Text = Localization.Get("DownloadingIcons", remaining,
+                    Localization.Plural(remaining, "icon", "icons", "icons"));
                 this._DownloadStatusLabel.Visible = true;
             }
             else
@@ -1231,7 +1238,7 @@ namespace SAM.Picker
             this._AddGameTextBox.Text = "";
             this._Games.Clear();
             this.AddGame(id, "normal");
-            this._FilterGamesMenuItem.Checked = true;
+            this._FilterGamesButton.Checked = true;
             this.RefreshGames();
             this.DownloadNextLogo();
         }
@@ -1325,7 +1332,13 @@ namespace SAM.Picker
 
             this._GameListView.EndUpdate();
 
-            this._PickerStatusLabel.Text = Localization.Get("DisplayingGames", this._FilteredGames.Count, this._Games.Count);
+            {
+                var s = this._FilteredGames.Count;
+                var t = this._Games.Count;
+                this._PickerStatusLabel.Text = Localization.Get("DisplayingGames", s, t,
+                    Localization.Plural(s, "game", "games", "games"),
+                    Localization.Plural(t, "game", "games", "games"));
+            }
         }
 
         private void OnGameListItemCheck(object sender, ItemCheckEventArgs e)
@@ -1467,7 +1480,8 @@ namespace SAM.Picker
 
             var result = MessageBox.Show(
                 this,
-                Localization.Get("UnlockAllConfirm", this._FilteredGames.Count),
+                Localization.Get("UnlockAllConfirm", this._FilteredGames.Count,
+                    Localization.Plural(this._FilteredGames.Count, "game", "games", "games")),
                 Localization.Get("UnlockAllTitle"),
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
@@ -1561,8 +1575,14 @@ namespace SAM.Picker
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
-                this._PickerStatusLabel.Text =
-                    Localization.Get("DisplayingGames", this._GameListView.Items.Count, this._Games.Count);
+                {
+                    var shown2 = this._GameListView.Items.Count;
+                    var total2 = this._Games.Count;
+                    this._PickerStatusLabel.Text =
+                        Localization.Get("DisplayingGames", shown2, total2,
+                            Localization.Plural(shown2, "game", "games", "games"),
+                            Localization.Plural(total2, "game", "games", "games"));
+                }
             };
 
             worker.RunWorkerAsync(games);
@@ -1702,16 +1722,15 @@ namespace SAM.Picker
             this._RefreshGamesButton.Text = Localization.Get("RefreshGames");
             this._AddGameButton.Text = Localization.Get("AddGame");
             this._FindGamesLabel.Text = Localization.Get("Filter");
-            this._FilterGamesMenuItem.Text = Localization.Get("ShowGames");
-            this._FilterDemosMenuItem.Text = Localization.Get("ShowDemos");
-            this._FilterModsMenuItem.Text = Localization.Get("ShowMods");
-            this._FilterJunkMenuItem.Text = Localization.Get("ShowJunk");
+            this._FilterGamesButton.Text = Localization.Get("FilterGames");
+            this._FilterDemosButton.Text = Localization.Get("FilterDemos");
+            this._FilterModsButton.Text = Localization.Get("FilterMods");
+            this._FilterJunkButton.Text = Localization.Get("FilterJunk");
             this._SettingsButton.ToolTipText = Localization.Get("Settings");
             this._UnlockAllGamesButton.Text = Localization.Get("UnlockAllGames");
             this._UnlockAllGamesButton.ToolTipText = Localization.Get("UnlockAllGamesTooltip");
             this._IdleGamesButton.Text = Localization.Get("IdleGames");
             this._IdleGamesButton.ToolTipText = Localization.Get("IdleGamesTooltip");
-            this._FilterDropDownButton.Text = Localization.Get("GameFiltering");
 
             if (this._IsListView && this._GameListView.Columns.Count >= 6)
             {
@@ -1729,8 +1748,14 @@ namespace SAM.Picker
                 }
             }
 
-            this._PickerStatusLabel.Text =
-                Localization.Get("DisplayingGames", this._GameListView.Items.Count, this._Games.Count);
+            {
+                var s = this._GameListView.Items.Count;
+                var t = this._Games.Count;
+                this._PickerStatusLabel.Text =
+                    Localization.Get("DisplayingGames", s, t,
+                        Localization.Plural(s, "game", "games", "games"),
+                        Localization.Plural(t, "game", "games", "games"));
+            }
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

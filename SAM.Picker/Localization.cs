@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SAM.Picker
@@ -15,14 +16,13 @@ namespace SAM.Picker
             { "RefreshGames", "Refresh Games" },
             { "AddGame", "Add Game" },
             { "Filter", "Filter" },
-            { "ShowGames", "Show &games" },
-            { "ShowDemos", "Show &demos" },
-            { "ShowMods", "Show &mods" },
-            { "ShowJunk", "Show &junk" },
+            { "FilterGames", "Games" },
+            { "FilterDemos", "Demos" },
+            { "FilterMods", "Mods" },
+            { "FilterJunk", "Junk" },
             { "Settings", "Settings" },
             { "UnlockAllGames", "Unlock All Games" },
             { "IdleGames", "Idle Games" },
-            { "GameFiltering", "Game filtering" },
             { "DownloadStatus", "Download status" },
 
             // Picker tooltips
@@ -41,8 +41,8 @@ namespace SAM.Picker
             { "CheckingOwnershipPercent", "Checking game ownership... {0}%" },
             { "ScanningLocalGames", "Scanning local Steam library..." },
             { "ScanningProtected", "Scanning protected achievements..." },
-            { "DisplayingGames", "Displaying {0} games. Total {1} games." },
-            { "DownloadingIcons", "Downloading {0} game icons..." },
+            { "DisplayingGames", "Displaying {0} {2}. Total {1} {3}." },
+            { "DownloadingIcons", "Downloading {0} game {1}..." },
             { "DownloadCancelled", "Game list download was cancelled." },
 
             // Column headers
@@ -66,7 +66,7 @@ namespace SAM.Picker
             { "LimitReached", "Limit Reached" },
 
             // Unlock all
-            { "UnlockAllConfirm", "This will unlock ALL achievements for {0} displayed games.\n\nEach game will be processed sequentially. This may take a while.\n\nAre you sure you want to continue?" },
+            { "UnlockAllConfirm", "This will unlock ALL achievements for {0} displayed {1}.\n\nEach game will be processed sequentially. This may take a while.\n\nAre you sure you want to continue?" },
             { "UnlockAllTitle", "Unlock All Games" },
             { "BatchComplete", "Batch unlock complete!\n\nSuccessful: {0}\nFailed: {1}" },
             { "Results", "Results" },
@@ -80,9 +80,9 @@ namespace SAM.Picker
             { "SteamApiKey", "Steam Web API Key (optional):" },
             { "SteamApiKeyHint", "\u2728 What API key gives you:\n\u2022 Full game library \u2014 finds all your games, even uninstalled ones\n\u2022 Achievement progress \u2014 shows how many unlocked per game\n\u2022 Profile tab \u2014 avatar, nickname, Steam level, online status\n\u2022 VAC protection \u2014 warns before unlocking in VAC-protected games\n\nThe key is free and stays in the app until you reinstall.\nGet your key at:" },
             { "FetchingFromApi", "Fetching game list from Steam API..." },
-            { "ApiGamesFound", "Found {0} additional games via Steam API." },
+            { "ApiGamesFound", "Found {0} additional {1} via Steam API." },
             { "LoadingAchievements", "Loading achievements... {0}/{1}" },
-            { "AchievementsLoaded", "Achievements loaded for {0} games." },
+            { "AchievementsLoaded", "Achievements loaded for {0} {1}." },
             { "OK", "OK" },
             { "Cancel", "Cancel" },
             { "TestApi", "Test" },
@@ -186,14 +186,13 @@ namespace SAM.Picker
             { "RefreshGames", "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0438\u0433\u0440\u044B" },
             { "AddGame", "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0438\u0433\u0440\u0443" },
             { "Filter", "\u0424\u0438\u043B\u044C\u0442\u0440" },
-            { "ShowGames", "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C &\u0438\u0433\u0440\u044B" },
-            { "ShowDemos", "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C &\u0434\u0435\u043C\u043E" },
-            { "ShowMods", "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C &\u043C\u043E\u0434\u044B" },
-            { "ShowJunk", "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C &\u043C\u0443\u0441\u043E\u0440" },
+            { "FilterGames", "\u0418\u0433\u0440\u044B" },
+            { "FilterDemos", "\u0414\u0435\u043C\u043E" },
+            { "FilterMods", "\u041C\u043E\u0434\u044B" },
+            { "FilterJunk", "\u041C\u0443\u0441\u043E\u0440" },
             { "Settings", "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438" },
             { "UnlockAllGames", "\u0420\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435" },
             { "IdleGames", "Idle \u0438\u0433\u0440\u044B" },
-            { "GameFiltering", "\u0424\u0438\u043B\u044C\u0442\u0440\u0430\u0446\u0438\u044F \u0438\u0433\u0440" },
             { "DownloadStatus", "\u0421\u0442\u0430\u0442\u0443\u0441 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438" },
 
             // Picker tooltips
@@ -212,8 +211,8 @@ namespace SAM.Picker
             { "CheckingOwnershipPercent", "\u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0432\u043B\u0430\u0434\u0435\u043D\u0438\u044F \u0438\u0433\u0440\u0430\u043C\u0438... {0}%" },
             { "ScanningLocalGames", "\u0421\u043A\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E\u0439 \u0431\u0438\u0431\u043B\u0438\u043E\u0442\u0435\u043A\u0438 Steam..." },
             { "ScanningProtected", "\u0421\u043A\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0437\u0430\u0449\u0438\u0449\u0451\u043D\u043D\u044B\u0445 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0439..." },
-            { "DisplayingGames", "\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E {0} \u0438\u0433\u0440. \u0412\u0441\u0435\u0433\u043E {1} \u0438\u0433\u0440." },
-            { "DownloadingIcons", "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 {0} \u0438\u043A\u043E\u043D\u043E\u043A \u0438\u0433\u0440..." },
+            { "DisplayingGames", "\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E {0} {2}. \u0412\u0441\u0435\u0433\u043E {1} {3}." },
+            { "DownloadingIcons", "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 {0} {1} \u0438\u0433\u0440..." },
             { "DownloadCancelled", "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0441\u043F\u0438\u0441\u043A\u0430 \u0438\u0433\u0440 \u0431\u044B\u043B\u0430 \u043E\u0442\u043C\u0435\u043D\u0435\u043D\u0430." },
 
             // Column headers
@@ -237,7 +236,7 @@ namespace SAM.Picker
             { "LimitReached", "\u0414\u043E\u0441\u0442\u0438\u0433\u043D\u0443\u0442 \u043F\u0440\u0435\u0434\u0435\u043B" },
 
             // Unlock all
-            { "UnlockAllConfirm", "\u042D\u0442\u043E \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u0443\u0435\u0442 \u0412\u0421\u0415 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u044F \u0434\u043B\u044F {0} \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0435\u043C\u044B\u0445 \u0438\u0433\u0440.\n\n\u041A\u0430\u0436\u0434\u0430\u044F \u0438\u0433\u0440\u0430 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u043D\u0430 \u043F\u043E\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u043D\u043E. \u042D\u0442\u043E \u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u043D\u044F\u0442\u044C \u0432\u0440\u0435\u043C\u044F.\n\n\u0412\u044B \u0443\u0432\u0435\u0440\u0435\u043D\u044B, \u0447\u0442\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C?" },
+            { "UnlockAllConfirm", "\u042D\u0442\u043E \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u0443\u0435\u0442 \u0412\u0421\u0415 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u044F \u0434\u043B\u044F {0} \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0435\u043C\u044B\u0445 {1}.\n\n\u041A\u0430\u0436\u0434\u0430\u044F \u0438\u0433\u0440\u0430 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u043D\u0430 \u043F\u043E\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u043D\u043E. \u042D\u0442\u043E \u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u043D\u044F\u0442\u044C \u0432\u0440\u0435\u043C\u044F.\n\n\u0412\u044B \u0443\u0432\u0435\u0440\u0435\u043D\u044B, \u0447\u0442\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C?" },
             { "UnlockAllTitle", "\u0420\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0432\u0441\u0435 \u0438\u0433\u0440\u044B" },
             { "BatchComplete", "\u041C\u0430\u0441\u0441\u043E\u0432\u0430\u044F \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u043A\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0430!\n\n\u0423\u0441\u043F\u0435\u0448\u043D\u043E: {0}\n\u041D\u0435\u0443\u0434\u0430\u0447\u043D\u043E: {1}" },
             { "Results", "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B" },
@@ -251,9 +250,9 @@ namespace SAM.Picker
             { "SteamApiKey", "Steam Web API \u043A\u043B\u044E\u0447 (\u043E\u043F\u0446\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u043E):" },
             { "SteamApiKeyHint", "\u2728 \u0427\u0442\u043E \u0434\u0430\u0451\u0442 API \u043A\u043B\u044E\u0447:\n\u2022 \u0412\u0441\u0435 \u0438\u0433\u0440\u044B \u2014 \u043D\u0430\u0445\u043E\u0434\u0438\u0442 \u0434\u0430\u0436\u0435 \u0443\u0434\u0430\u043B\u0451\u043D\u043D\u044B\u0435 \u0438\u0433\u0440\u044B \u0438\u0437 \u0431\u0438\u0431\u043B\u0438\u043E\u0442\u0435\u043A\u0438\n\u2022 \u0414\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u044F \u2014 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0435\u0442 \u0441\u043A\u043E\u043B\u044C\u043A\u043E \u043E\u0442\u043A\u0440\u044B\u0442\u043E \u0432 \u043A\u0430\u0436\u0434\u043E\u0439 \u0438\u0433\u0440\u0435\n\u2022 \u041F\u0440\u043E\u0444\u0438\u043B\u044C \u2014 \u0430\u0432\u0430\u0442\u0430\u0440, \u043D\u0438\u043A, \u0443\u0440\u043E\u0432\u0435\u043D\u044C Steam, \u0441\u0442\u0430\u0442\u0443\u0441 \u043E\u043D\u043B\u0430\u0439\u043D\n\u2022 VAC \u0437\u0430\u0449\u0438\u0442\u0430 \u2014 \u043F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0430\u0435\u0442 \u043F\u0435\u0440\u0435\u0434 \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u043A\u043E\u0439 \u0432 VAC-\u0438\u0433\u0440\u0430\u0445\n\n\u041A\u043B\u044E\u0447 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u0438 \u0445\u0440\u0430\u043D\u0438\u0442\u0441\u044F \u0432 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0435 \u0434\u043E \u043F\u0435\u0440\u0435\u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0438.\n\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u0435 \u043A\u043B\u044E\u0447 \u043D\u0430:" },
             { "FetchingFromApi", "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0441\u043F\u0438\u0441\u043A\u0430 \u0438\u0433\u0440 \u0438\u0437 Steam API..." },
-            { "ApiGamesFound", "\u041D\u0430\u0439\u0434\u0435\u043D\u043E {0} \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0445 \u0438\u0433\u0440 \u0447\u0435\u0440\u0435\u0437 Steam API." },
+            { "ApiGamesFound", "\u041D\u0430\u0439\u0434\u0435\u043D\u043E {0} \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0445 {1} \u0447\u0435\u0440\u0435\u0437 Steam API." },
             { "LoadingAchievements", "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0439... {0}/{1}" },
-            { "AchievementsLoaded", "\u0414\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u044F \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B \u0434\u043B\u044F {0} \u0438\u0433\u0440." },
+            { "AchievementsLoaded", "\u0414\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u044F \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B \u0434\u043B\u044F {0} {1}." },
             { "OK", "OK" },
             { "Cancel", "\u041E\u0442\u043C\u0435\u043D\u0430" },
             { "TestApi", "\u0422\u0435\u0441\u0442" },
@@ -350,6 +349,19 @@ namespace SAM.Picker
             { "ModeAntiIdle", "\u0410\u043D\u0442\u0438-Idle" },
             { "ModeIdle", "Idle" },
         };
+
+        public static string Plural(int count, string one, string few, string many)
+        {
+            if (_current == Language.English)
+                return count == 1 ? one : many;
+
+            int abs = Math.Abs(count) % 100;
+            int last = abs % 10;
+            if (abs > 10 && abs < 20) return many;
+            if (last > 1 && last < 5) return few;
+            if (last == 1) return one;
+            return many;
+        }
 
         public static string Get(string key)
         {
