@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="CommitChanges" xml:space="preserve">
+    <value>Commit Changes</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Achievements" xml:space="preserve">
+    <value>Achievements</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="UnlockTime" xml:space="preserve">
+    <value>Unlock Time</value>
+  </data>
+  <data name="GlobalPercent" xml:space="preserve">
+    <value>Global %</value>
+  </data>
+  <data name="ShowOnly" xml:space="preserve">
+    <value>Show only</value>
+  </data>
+  <data name="Locked" xml:space="preserve">
+    <value>locked</value>
+  </data>
+  <data name="Unlocked" xml:space="preserve">
+    <value>unlocked</value>
+  </data>
+  <data name="HideProtected" xml:space="preserve">
+    <value>hide protected</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="LockAll" xml:space="preserve">
+    <value>Lock All</value>
+  </data>
+  <data name="InvertAll" xml:space="preserve">
+    <value>Invert All</value>
+  </data>
+  <data name="UnlockAll" xml:space="preserve">
+    <value>Unlock All</value>
+  </data>
+  <data name="DownloadStatus" xml:space="preserve">
+    <value>Download status</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="Extra" xml:space="preserve">
+    <value>Extra</value>
+  </data>
+  <data name="DownloadingIcons" xml:space="preserve">
+    <value>Downloading {0} {1}...</value>
+  </data>
+  <data name="ErrorRetrievingStats" xml:space="preserve">
+    <value>Error while retrieving stats: {0}</value>
+  </data>
+  <data name="FailedLoadSchema" xml:space="preserve">
+    <value>Failed to load schema.</value>
+  </data>
+  <data name="ErrorAchievementsRetrieval" xml:space="preserve">
+    <value>Error when handling achievements retrieval.</value>
+  </data>
+  <data name="ErrorStatsRetrieval" xml:space="preserve">
+    <value>Error when handling stats retrieval.</value>
+  </data>
+  <data name="RetrievedStats" xml:space="preserve">
+    <value>Retrieved {0} {2} and {1} {3}.</value>
+  </data>
+  <data name="RetrievingStats" xml:space="preserve">
+    <value>Retrieving stat information...</value>
+  </data>
+  <data name="ErrorSettingState" xml:space="preserve">
+    <value>An error occurred while setting the state for {0}, aborting store.</value>
+  </data>
+  <data name="ErrorSettingValue" xml:space="preserve">
+    <value>An error occurred while setting the value for {0}, aborting store.</value>
+  </data>
+  <data name="ErrorStoring" xml:space="preserve">
+    <value>An error occurred while storing, aborting.</value>
+  </data>
+  <data name="StoredStats" xml:space="preserve">
+    <value>Stored {0} {2} and {1} {3}.</value>
+  </data>
+  <data name="ConfirmResetStats" xml:space="preserve">
+    <value>Are you absolutely sure you want to reset stats?</value>
+  </data>
+  <data name="ConfirmResetAchievements" xml:space="preserve">
+    <value>Do you want to reset achievements too?</value>
+  </data>
+  <data name="ReallyReallySure" xml:space="preserve">
+    <value>Really really sure?</value>
+  </data>
+  <data name="ProtectedAchievement" xml:space="preserve">
+    <value>Sorry, but this is a protected achievement and cannot be managed with SAM Evolved.</value>
+  </data>
+  <data name="ProtectedAchievements" xml:space="preserve">
+    <value>protected</value>
+  </data>
+  <data name="ProtectedTooltip" xml:space="preserve">
+    <value>⚠ Protected — server-validated achievement, cannot be modified locally</value>
+  </data>
+  <data name="AllProtectedWarning" xml:space="preserve">
+    <value>All achievements in this game are server-validated and cannot be modified with SAM.
+
+This game uses server-side achievement validation — changes will be rejected by Steam servers.</value>
+  </data>
+  <data name="StatProtected" xml:space="preserve">
+    <value>Stat is protected! -- you can't modify it</value>
+  </data>
+  <data name="InvalidValue" xml:space="preserve">
+    <value>Invalid value</value>
+  </data>
+  <data name="StatsEditingAgreement" xml:space="preserve">
+    <value>I understand by modifying the values of stats, I may screw things up and can't blame anyone but myself.</value>
+  </data>
+  <data name="GenericError" xml:space="preserve">
+    <value>generic error -- this usually means you don't own the game</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="Question" xml:space="preserve">
+    <value>Question</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="VacDetected" xml:space="preserve">
+    <value>VAC / Anti-Cheat Protected</value>
+  </data>
+  <data name="VacWarningText" xml:space="preserve">
+    <value>⚠ VAC / Anti-Cheat Protected — Editing achievements or statistics for this game may result in a VAC ban or account restrictions.</value>
+  </data>
+  <data name="VacBlockedEdit" xml:space="preserve">
+    <value>This game uses VAC / Anti-Cheat protection.
+Modifying achievements or statistics is blocked to protect your account.
+
+Click &quot;I understand the risks&quot; to override at your own risk.</value>
+  </data>
+  <data name="VacStoreWarning" xml:space="preserve">
+    <value>This game uses VAC / Anti-Cheat protection!
+
+Saving changes may result in:
+• VAC ban (permanent)
+• Game ban
+• Online features restriction
+
+Are you absolutely sure you want to continue?</value>
+  </data>
+  <data name="VacOverrideConfirm" xml:space="preserve">
+    <value>WARNING: You are about to enable editing for a VAC-protected game.
+
+This may lead to:
+• Permanent VAC ban on your account
+• Loss of online multiplayer access
+• Game-specific bans
+
+The developers are NOT responsible for any consequences.
+
+Do you want to proceed?</value>
+  </data>
+  <data name="VacOverrideDone" xml:space="preserve">
+    <value>Unlocked</value>
+  </data>
+  <data name="VacOverrideBtn" xml:space="preserve">
+    <value>I understand the risks</value>
+  </data>
+  <data name="VacWarningOverridden" xml:space="preserve">
+    <value>⚠ VAC protection override active — You are editing at your own risk. Any consequences are your responsibility.</value>
+  </data>
+  <data name="VacUnlockAllWarning" xml:space="preserve">
+    <value>This game uses VAC / Anti-Cheat protection!
+
+Unlocking all achievements may result in:
+• Permanent VAC ban
+• Game ban
+• Loss of online features
+
+Yes — Unlock all (at your own risk)
+No — Cancel
+
+Do you want to unlock all achievements?</value>
+  </data>
+  <data name="VacActionWarning" xml:space="preserve">
+    <value>This game uses VAC / Anti-Cheat protection.
+Modifying achievements or statistics may result in a ban.
+
+Are you sure you want to continue?</value>
+  </data>
+  <data name="VacClickWarning" xml:space="preserve">
+    <value>This game uses VAC / Anti-Cheat protection.
+
+Changing achievements may lead to a VAC ban or account restrictions.
+This warning will only appear once per session.
+
+Do you want to edit achievements for this game?</value>
+  </data>
+  <data name="LockAllConfirm" xml:space="preserve">
+    <value>Are you sure you want to lock all achievements?
+This will uncheck all achievements in the list.</value>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+</root>

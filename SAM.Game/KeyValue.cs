@@ -318,5 +318,128 @@ namespace SAM.Game
                 return false;
             }
         }
+
+        public static KeyValue LoadAsText(string path)
+        {
+            if (File.Exists(path) == false)
+            {
+                return null;
+            }
+
+            try
+            {
+                string content = File.ReadAllText(path);
+                return ParseText(content);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static KeyValue ParseText(string text)
+        {
+            int pos = 0;
+            var root = new KeyValue { Valid = true, Children = new() };
+
+            TextSkipWhitespace(text, ref pos);
+            if (pos < text.Length && text[pos] == '"')
+            {
+                root.Name = TextReadString(text, ref pos);
+                TextSkipWhitespace(text, ref pos);
+                if (pos < text.Length && text[pos] == '{')
+                {
+                    pos++;
+                    TextReadChildren(text, ref pos, root);
+                }
+            }
+
+            return root;
+        }
+
+        private static void TextReadChildren(string text, ref int pos, KeyValue parent)
+        {
+            while (pos < text.Length)
+            {
+                TextSkipWhitespace(text, ref pos);
+                if (pos >= text.Length) break;
+
+                if (text[pos] == '}')
+                {
+                    pos++;
+                    return;
+                }
+
+                if (text[pos] == '"')
+                {
+                    string key = TextReadString(text, ref pos);
+                    TextSkipWhitespace(text, ref pos);
+
+                    if (pos < text.Length && text[pos] == '{')
+                    {
+                        pos++;
+                        var child = new KeyValue { Name = key, Valid = true, Children = new() };
+                        TextReadChildren(text, ref pos, child);
+                        parent.Children.Add(child);
+                    }
+                    else if (pos < text.Length && text[pos] == '"')
+                    {
+                        string value = TextReadString(text, ref pos);
+                        parent.Children.Add(new KeyValue
+                        {
+                            Name = key,
+                            Type = KeyValueType.String,
+                            Value = value,
+                            Valid = true
+                        });
+                    }
+                }
+                else
+                {
+                    pos++;
+                }
+            }
+        }
+
+        private static string TextReadString(string text, ref int pos)
+        {
+            if (pos >= text.Length || text[pos] != '"') return "";
+            pos++;
+            int start = pos;
+            while (pos < text.Length && text[pos] != '"')
+            {
+                if (text[pos] == '\\' && pos + 1 < text.Length)
+                {
+                    pos += 2;
+                }
+                else
+                {
+                    pos++;
+                }
+            }
+            string result = text.Substring(start, pos - start);
+            if (pos < text.Length) pos++;
+            return result;
+        }
+
+        private static void TextSkipWhitespace(string text, ref int pos)
+        {
+            while (pos < text.Length)
+            {
+                char c = text[pos];
+                if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+                {
+                    pos++;
+                }
+                else if (c == '/' && pos + 1 < text.Length && text[pos + 1] == '/')
+                {
+                    while (pos < text.Length && text[pos] != '\n') pos++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
     }
 }

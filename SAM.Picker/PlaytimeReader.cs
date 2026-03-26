@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Text.RegularExpressions;
+using SAM.Game;
 using Serilog;
 
 namespace SAM.Picker
@@ -40,7 +40,9 @@ namespace SAM.Picker
             try
             {
                 string content = File.ReadAllText(configPath);
-                ParseAppsSection(content, result);
+                var parsed = ParseVdf(content);
+                foreach (var kv in parsed)
+                    result[kv.Key] = kv.Value;
                 Log.Debug("PlaytimeReader parsed {Count} app entries from localconfig.vdf", result.Count);
             }
             catch (Exception ex)
@@ -54,121 +56,54 @@ namespace SAM.Picker
         internal static Dictionary<uint, AppLocalData> ParseVdf(string content)
         {
             var result = new Dictionary<uint, AppLocalData>();
-            ParseAppsSection(content, result);
+
+            var root = KeyValue.ParseText(content);
+            if (root == null || !root.Valid)
+                return result;
+
+            var apps = FindAppsNode(root);
+            if (apps == null || apps.Children == null)
+                return result;
+
+            foreach (var app in apps.Children)
+            {
+                if (!uint.TryParse(app.Name, out uint appId))
+                    continue;
+
+                var playtime = app["Playtime"];
+                if (!playtime.Valid)
+                    playtime = app["playtime_forever"];
+
+                int pt = playtime.AsInteger(0);
+
+                long lp = 0;
+                var lastPlayed = app["LastPlayed"];
+                if (lastPlayed.Valid)
+                    long.TryParse(lastPlayed.AsString("0"), out lp);
+
+                if (pt >= 0 || lp > 0)
+                {
+                    result[appId] = new AppLocalData
+                    {
+                        PlaytimeMinutes = pt,
+                        LastPlayedTimestamp = lp
+                    };
+                }
+            }
+
             return result;
         }
 
-        private static void ParseAppsSection(string content, Dictionary<uint, AppLocalData> result)
+        private static KeyValue FindAppsNode(KeyValue root)
         {
-            var match = Regex.Match(content, @"""apps""\s*\{", RegexOptions.IgnoreCase);
-            if (!match.Success) return;
+            if (string.Equals(root.Name, "apps", StringComparison.OrdinalIgnoreCase))
+                return root;
 
-            int i = match.Index;
-            while (i < content.Length && content[i] != '{') i++;
-            if (i >= content.Length) return;
-            i++;
-            int braceDepth = 1;
+            var apps = root["Software"]["Valve"]["Steam"]["apps"];
+            if (apps.Valid)
+                return apps;
 
-            while (i < content.Length && braceDepth > 0)
-            {
-                char c = content[i];
-                if (c == '}') { braceDepth--; i++; continue; }
-
-                if (c == '"' && braceDepth == 1)
-                {
-                    string appIdStr = ReadQuotedString(content, ref i);
-                    if (uint.TryParse(appIdStr, out uint appId))
-                    {
-                        var data = ParseAppBlock(content, ref i);
-                        if (data.PlaytimeMinutes >= 0 || data.LastPlayedTimestamp > 0)
-                        {
-                            result[appId] = data;
-                        }
-                    }
-                    else
-                    {
-                        SkipBlock(content, ref i);
-                    }
-                }
-                else
-                {
-                    i++;
-                }
-            }
-        }
-
-        private static AppLocalData ParseAppBlock(string content, ref int i)
-        {
-            var data = new AppLocalData { PlaytimeMinutes = 0, LastPlayedTimestamp = 0 };
-
-            while (i < content.Length && content[i] != '{' && content[i] != '"') i++;
-            if (i >= content.Length || content[i] != '{') return data;
-            i++;
-
-            int depth = 1;
-            while (i < content.Length && depth > 0)
-            {
-                char c = content[i];
-                if (c == '{') { depth++; i++; continue; }
-                if (c == '}') { depth--; i++; continue; }
-
-                if (c == '"' && depth == 1)
-                {
-                    string key = ReadQuotedString(content, ref i);
-                    while (i < content.Length && (content[i] == ' ' || content[i] == '\t' || content[i] == '\r' || content[i] == '\n')) i++;
-
-                    if (i < content.Length && content[i] == '"')
-                    {
-                        string value = ReadQuotedString(content, ref i);
-                        if (string.Equals(key, "Playtime", StringComparison.OrdinalIgnoreCase) ||
-                            string.Equals(key, "playtime_forever", StringComparison.OrdinalIgnoreCase))
-                        {
-                            int.TryParse(value, out int pt);
-                            data.PlaytimeMinutes = pt;
-                        }
-                        else if (string.Equals(key, "LastPlayed", StringComparison.OrdinalIgnoreCase))
-                        {
-                            long.TryParse(value, out long lp);
-                            data.LastPlayedTimestamp = lp;
-                        }
-                    }
-                    else if (i < content.Length && content[i] == '{')
-                    {
-                        SkipBlock(content, ref i);
-                    }
-                }
-                else
-                {
-                    i++;
-                }
-            }
-
-            return data;
-        }
-
-        private static string ReadQuotedString(string content, ref int i)
-        {
-            if (i >= content.Length || content[i] != '"') return "";
-            i++;
-            int start = i;
-            while (i < content.Length && content[i] != '"') i++;
-            string result = content.Substring(start, i - start);
-            if (i < content.Length) i++;
-            return result;
-        }
-
-        private static void SkipBlock(string content, ref int i)
-        {
-            while (i < content.Length && content[i] != '{') i++;
-            if (i >= content.Length) return;
-            i++;
-            int depth = 1;
-            while (i < content.Length && depth > 0)
-            {
-                if (content[i] == '{') depth++;
-                else if (content[i] == '}') depth--;
-                i++;
-            }
+            return null;
         }
 
         public static string FormatPlaytime(int minutes)

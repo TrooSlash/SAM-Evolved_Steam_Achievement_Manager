@@ -1,0 +1,534 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="RefreshGames" xml:space="preserve">
+    <value>Refresh Games</value>
+  </data>
+  <data name="AddGame" xml:space="preserve">
+    <value>Add Game</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="FilterGames" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="FilterDemos" xml:space="preserve">
+    <value>Demos</value>
+  </data>
+  <data name="FilterMods" xml:space="preserve">
+    <value>Mods</value>
+  </data>
+  <data name="FilterJunk" xml:space="preserve">
+    <value>Junk</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="UnlockAllGames" xml:space="preserve">
+    <value>Unlock All Games</value>
+  </data>
+  <data name="IdleGames" xml:space="preserve">
+    <value>Idle Games</value>
+  </data>
+  <data name="DownloadStatus" xml:space="preserve">
+    <value>Download status</value>
+  </data>
+  <data name="UnlockAllGamesTooltip" xml:space="preserve">
+    <value>Unlock achievements for all displayed games.</value>
+  </data>
+  <data name="IdleGamesTooltip" xml:space="preserve">
+    <value>Idle selected/all games to accumulate play hours.</value>
+  </data>
+  <data name="TilesView" xml:space="preserve">
+    <value>🔲 Tiles</value>
+  </data>
+  <data name="ListView" xml:space="preserve">
+    <value>📋 List</value>
+  </data>
+  <data name="SwitchToTileView" xml:space="preserve">
+    <value>Switch to tile view</value>
+  </data>
+  <data name="SwitchToListView" xml:space="preserve">
+    <value>Switch to list view</value>
+  </data>
+  <data name="DownloadingGameList" xml:space="preserve">
+    <value>Downloading game list...</value>
+  </data>
+  <data name="CheckingOwnership" xml:space="preserve">
+    <value>Checking game ownership...</value>
+  </data>
+  <data name="CheckingOwnershipPercent" xml:space="preserve">
+    <value>Checking game ownership... {0}%</value>
+  </data>
+  <data name="ScanningLocalGames" xml:space="preserve">
+    <value>Scanning local Steam library...</value>
+  </data>
+  <data name="ScanningProtected" xml:space="preserve">
+    <value>Scanning protected achievements...</value>
+  </data>
+  <data name="DisplayingGames" xml:space="preserve">
+    <value>Displaying {0} {2}. Total {1} {3}.</value>
+  </data>
+  <data name="DownloadingIcons" xml:space="preserve">
+    <value>Downloading {0} game {1}...</value>
+  </data>
+  <data name="DownloadCancelled" xml:space="preserve">
+    <value>Game list download was cancelled.</value>
+  </data>
+  <data name="ColGame" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="ColAppId" xml:space="preserve">
+    <value>AppId</value>
+  </data>
+  <data name="ColType" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="ColHours" xml:space="preserve">
+    <value>Hours</value>
+  </data>
+  <data name="ColLastPlayed" xml:space="preserve">
+    <value>Last Played</value>
+  </data>
+  <data name="ColAchievements" xml:space="preserve">
+    <value>Achievements</value>
+  </data>
+  <data name="NoGamesSelected" xml:space="preserve">
+    <value>No games selected.</value>
+  </data>
+  <data name="FailedToStartSAMGame" xml:space="preserve">
+    <value>Failed to start SAM.Game.exe.</value>
+  </data>
+  <data name="NoGamesToProcess" xml:space="preserve">
+    <value>No games to process.</value>
+  </data>
+  <data name="EnterValidGameId" xml:space="preserve">
+    <value>Please enter a valid game ID.</value>
+  </data>
+  <data name="DontOwnGame" xml:space="preserve">
+    <value>You don't own that game.</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="MaxGamesWarning" xml:space="preserve">
+    <value>Maximum 32 games can be selected for idle.</value>
+  </data>
+  <data name="LimitReached" xml:space="preserve">
+    <value>Limit Reached</value>
+  </data>
+  <data name="UnlockAllConfirm" xml:space="preserve">
+    <value>This will unlock ALL achievements for {0} displayed {1}.
+
+Each game will be processed sequentially. This may take a while.
+
+Are you sure you want to continue?</value>
+  </data>
+  <data name="UnlockAllTitle" xml:space="preserve">
+    <value>Unlock All Games</value>
+  </data>
+  <data name="BatchComplete" xml:space="preserve">
+    <value>Batch unlock complete!
+
+Successful: {0}
+Failed: {1}</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>Results</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>Processing {0}/{1}: {2}...</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language:</value>
+  </data>
+  <data name="ViewMode" xml:space="preserve">
+    <value>View Mode:</value>
+  </data>
+  <data name="ListMode" xml:space="preserve">
+    <value>List</value>
+  </data>
+  <data name="TilesMode" xml:space="preserve">
+    <value>Tiles</value>
+  </data>
+  <data name="SteamApiKey" xml:space="preserve">
+    <value>Steam Web API Key (optional):</value>
+  </data>
+  <data name="SteamApiKeyHint" xml:space="preserve">
+    <value>✨ What API key gives you:
+• Full game library — finds all your games, even uninstalled ones
+• Achievement progress — shows how many unlocked per game
+• Profile tab — avatar, nickname, Steam level, online status
+• VAC protection — warns before unlocking in VAC-protected games
+
+The key is free and stays in the app until you reinstall.
+Get your key at:</value>
+  </data>
+  <data name="FetchingFromApi" xml:space="preserve">
+    <value>Fetching game list from Steam API...</value>
+  </data>
+  <data name="ApiGamesFound" xml:space="preserve">
+    <value>Found {0} additional {1} via Steam API.</value>
+  </data>
+  <data name="LoadingAchievements" xml:space="preserve">
+    <value>Loading achievements... {0}/{1}</value>
+  </data>
+  <data name="AchievementsLoaded" xml:space="preserve">
+    <value>Achievements loaded for {0} {1}.</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="TestApi" xml:space="preserve">
+    <value>Test</value>
+  </data>
+  <data name="ApiKeyEmpty" xml:space="preserve">
+    <value>Please enter an API key first.</value>
+  </data>
+  <data name="ApiKeyValid" xml:space="preserve">
+    <value>API key is valid! ✅</value>
+  </data>
+  <data name="ApiKeyInvalid" xml:space="preserve">
+    <value>API key is invalid or the request failed. ❌
+Check the key and try again.</value>
+  </data>
+  <data name="IdleSettings" xml:space="preserve">
+    <value>Idle Settings</value>
+  </data>
+  <data name="IdleModeLabel" xml:space="preserve">
+    <value>Idle Mode:</value>
+  </data>
+  <data name="IdleHours" xml:space="preserve">
+    <value>Idle hours:</value>
+  </data>
+  <data name="HoursPerGame" xml:space="preserve">
+    <value>Hours per game:</value>
+  </data>
+  <data name="TargetHoursPerBatch" xml:space="preserve">
+    <value>Target hours per batch:</value>
+  </data>
+  <data name="IdleHoursPerSession" xml:space="preserve">
+    <value>Idle hours (per session):</value>
+  </data>
+  <data name="TotalIdleTime" xml:space="preserve">
+    <value>Total idle time:</value>
+  </data>
+  <data name="Indefinite" xml:space="preserve">
+    <value>Indefinite (until manual stop)</value>
+  </data>
+  <data name="MaxSimultaneous" xml:space="preserve">
+    <value>Max simultaneous games:</value>
+  </data>
+  <data name="RotationInterval" xml:space="preserve">
+    <value>Rotation interval (minutes):</value>
+  </data>
+  <data name="RestartEvery" xml:space="preserve">
+    <value>Restart every (minutes):</value>
+  </data>
+  <data name="StartHHMM" xml:space="preserve">
+    <value>Start (HH:MM):</value>
+  </data>
+  <data name="EndHHMM" xml:space="preserve">
+    <value>End (HH:MM):</value>
+  </data>
+  <data name="AvailableGames" xml:space="preserve">
+    <value>Available games: {0}. Steam supports up to 32 games simultaneously.</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>▶  Start</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ModeName0" xml:space="preserve">
+    <value>Simple — Parallel</value>
+  </data>
+  <data name="ModeName1" xml:space="preserve">
+    <value>Sequential — One by One</value>
+  </data>
+  <data name="ModeName2" xml:space="preserve">
+    <value>Round-Robin — Rotation</value>
+  </data>
+  <data name="ModeName3" xml:space="preserve">
+    <value>Target Hours — Until Target</value>
+  </data>
+  <data name="ModeName4" xml:space="preserve">
+    <value>Schedule — Time Window</value>
+  </data>
+  <data name="ModeName5" xml:space="preserve">
+    <value>Anti-Idle — Detection Evasion</value>
+  </data>
+  <data name="ModeDesc0" xml:space="preserve">
+    <value>Launch multiple games in parallel for a set duration.
+Steam counts hours for all simultaneously (up to 32 games).
+The simplest mode for quickly accumulating hours.</value>
+  </data>
+  <data name="ModeDesc1" xml:space="preserve">
+    <value>Games are launched strictly one at a time.
+Each runs for the specified duration, then automatically
+switches to the next game in the list.</value>
+  </data>
+  <data name="ModeDesc2" xml:space="preserve">
+    <value>Cyclic rotation in batches.
+A batch of games is launched, after a set interval
+it switches to the next batch, cycling through all.
+Ideal for cycling through hundreds of games in one session.</value>
+  </data>
+  <data name="ModeDesc3" xml:space="preserve">
+    <value>Accumulate target hours in batches (up to 32 games at a time).
+When the current batch reaches the target time,
+the next batch is automatically launched.
+Continues until all games reach the target hours.</value>
+  </data>
+  <data name="ModeDesc4" xml:space="preserve">
+    <value>Idle only within a specified time window.
+Games automatically start and stop on schedule
+(e.g., only at night from 23:00 to 07:00).</value>
+  </data>
+  <data name="ModeDesc5" xml:space="preserve">
+    <value>Periodic process restart for detection evasion.
+Every N minutes all processes are killed and
+restarted, simulating natural activity patterns.</value>
+  </data>
+  <data name="DetailedInfo0" xml:space="preserve">
+    <value>🎮 Simple — Parallel Idle
+
+The simplest mode. Launches the selected number of games
+simultaneously. Steam sees them as running and accumulates
+play time for each of them.
+
+• Max 32 games simultaneously (Steam limitation)
+• Set a time limit or run indefinitely
+• All games start and stop together
+
+Recommended for quickly accumulating hours across several games.</value>
+  </data>
+  <data name="DetailedInfo1" xml:space="preserve">
+    <value>📋 Sequential — One by One
+
+Launches games strictly one at a time. When one game
+has run for the specified duration, it closes and
+the next one from the list starts automatically.
+
+• One game at a time
+• Set hours per game
+• Processes the entire displayed game list
+
+Recommended when you need to accumulate many hours
+in specific games sequentially.</value>
+  </data>
+  <data name="DetailedInfo2" xml:space="preserve">
+    <value>🔄 Round-Robin — Rotation
+
+Cyclic rotation in batches. The first batch of games
+(up to 32) is launched, after the set interval it stops
+and the next batch starts. When all batches are done,
+the cycle starts over.
+
+• Rotation interval is configurable (5-1440 min)
+• Each batch — up to 32 games
+• Runs indefinitely or for a set time
+
+Ideal for cycling through hundreds of games in one session,
+distributing hours evenly.</value>
+  </data>
+  <data name="DetailedInfo3" xml:space="preserve">
+    <value>🎯 Target Hours — Until Target
+
+Launches a batch of games (up to 32 simultaneously) and runs
+for the specified number of hours. When time is up,
+the current batch stops and the next batch starts.
+Continues until all games in the list reach target hours.
+
+• Batches of N games (configurable, max 32)
+• Automatic batch switching
+• Single-pass: each game is processed once
+
+Recommended for mass hour accumulation across all games.</value>
+  </data>
+  <data name="DetailedInfo4" xml:space="preserve">
+    <value>🕐 Schedule — Time Window
+
+Idle runs only within a specified time window.
+Outside the schedule, processes are automatically paused,
+and resumed when the window starts.
+
+• Set start and end time (HH:MM)
+• Supports overnight windows (e.g., 23:00 — 07:00)
+• Number of games and hours are configurable
+
+Recommended for unattended idle (overnight, when away from PC).</value>
+  </data>
+  <data name="DetailedInfo5" xml:space="preserve">
+    <value>🛡 Anti-Idle — Detection Evasion
+
+Periodic restart of all processes.
+Every N minutes all idle processes are killed
+and restarted. This simulates natural behavior
+(launching/exiting games).
+
+• Restart interval is configurable (10-1440 min)
+• Runs indefinitely or for a set time
+• Creates a more natural activity pattern
+
+Recommended for extended idle sessions (12+ hours).</value>
+  </data>
+  <data name="ActiveGamesManager" xml:space="preserve">
+    <value>Active Games Manager</value>
+  </data>
+  <data name="StopAll" xml:space="preserve">
+    <value>⏹ Stop All</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="StatusWaiting" xml:space="preserve">
+    <value>⏳ Waiting</value>
+  </data>
+  <data name="StatusRunning" xml:space="preserve">
+    <value>▶ Running</value>
+  </data>
+  <data name="StatusPaused" xml:space="preserve">
+    <value>⏸ Paused</value>
+  </data>
+  <data name="StatusStopped" xml:space="preserve">
+    <value>⏹ Stopped</value>
+  </data>
+  <data name="StatusFailed" xml:space="preserve">
+    <value>✖ Failed</value>
+  </data>
+  <data name="StatusExited" xml:space="preserve">
+    <value>✖ Exited</value>
+  </data>
+  <data name="ActionPauseStop" xml:space="preserve">
+    <value>⏸ Pause  |  ⏹ Stop</value>
+  </data>
+  <data name="ActionResumeStop" xml:space="preserve">
+    <value>▶ Resume  |  ⏹ Stop</value>
+  </data>
+  <data name="ConfirmCloseMessage" xml:space="preserve">
+    <value>Some games are still running. Stop all and close?</value>
+  </data>
+  <data name="ConfirmClose" xml:space="preserve">
+    <value>Confirm Close</value>
+  </data>
+  <data name="IdleComplete" xml:space="preserve">
+    <value>  ✅ Idle complete.</value>
+  </data>
+  <data name="ColStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ColElapsed" xml:space="preserve">
+    <value>Elapsed</value>
+  </data>
+  <data name="ColAction" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="ModeStarting" xml:space="preserve">
+    <value>  Mode: {0} — Starting games...</value>
+  </data>
+  <data name="LogLevel" xml:space="preserve">
+    <value>Log Level:</value>
+  </data>
+  <data name="OpenLogFolder" xml:space="preserve">
+    <value>Open Logs</value>
+  </data>
+  <data name="LogLevelDebug" xml:space="preserve">
+    <value>Debug</value>
+  </data>
+  <data name="LogLevelInformation" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="LogLevelWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="LogLevelError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="NoLogsYet" xml:space="preserve">
+    <value>No log files yet.</value>
+  </data>
+  <data name="StatusOffline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="StatusOnline" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="StatusBusy" xml:space="preserve">
+    <value>Busy</value>
+  </data>
+  <data name="StatusAway" xml:space="preserve">
+    <value>Away</value>
+  </data>
+  <data name="StatusSnooze" xml:space="preserve">
+    <value>Snooze</value>
+  </data>
+  <data name="StatusLookingToTrade" xml:space="preserve">
+    <value>Looking to Trade</value>
+  </data>
+  <data name="StatusLookingToPlay" xml:space="preserve">
+    <value>Looking to Play</value>
+  </data>
+  <data name="ModeSimple" xml:space="preserve">
+    <value>Simple</value>
+  </data>
+  <data name="ModeSequential" xml:space="preserve">
+    <value>Sequential</value>
+  </data>
+  <data name="ModeRoundRobin" xml:space="preserve">
+    <value>Round-Robin</value>
+  </data>
+  <data name="ModeTargetHours" xml:space="preserve">
+    <value>Target Hours</value>
+  </data>
+  <data name="ModeSchedule" xml:space="preserve">
+    <value>Schedule</value>
+  </data>
+  <data name="ModeAntiIdle" xml:space="preserve">
+    <value>Anti-Idle</value>
+  </data>
+  <data name="ModeIdle" xml:space="preserve">
+    <value>Idle</value>
+  </data>
+</root>

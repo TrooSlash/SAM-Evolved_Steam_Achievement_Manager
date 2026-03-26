@@ -1,0 +1,534 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="RefreshGames" xml:space="preserve">
+    <value>Обновить игры</value>
+  </data>
+  <data name="AddGame" xml:space="preserve">
+    <value>Добавить игру</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Фильтр</value>
+  </data>
+  <data name="FilterGames" xml:space="preserve">
+    <value>Игры</value>
+  </data>
+  <data name="FilterDemos" xml:space="preserve">
+    <value>Демо</value>
+  </data>
+  <data name="FilterMods" xml:space="preserve">
+    <value>Моды</value>
+  </data>
+  <data name="FilterJunk" xml:space="preserve">
+    <value>Мусор</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="UnlockAllGames" xml:space="preserve">
+    <value>Разблокировать все</value>
+  </data>
+  <data name="IdleGames" xml:space="preserve">
+    <value>Idle игры</value>
+  </data>
+  <data name="DownloadStatus" xml:space="preserve">
+    <value>Статус загрузки</value>
+  </data>
+  <data name="UnlockAllGamesTooltip" xml:space="preserve">
+    <value>Разблокировать достижения для всех отображаемых игр.</value>
+  </data>
+  <data name="IdleGamesTooltip" xml:space="preserve">
+    <value>Idle выбранных/всех игр для накопления часов.</value>
+  </data>
+  <data name="TilesView" xml:space="preserve">
+    <value>🔲 Плитки</value>
+  </data>
+  <data name="ListView" xml:space="preserve">
+    <value>📋 Список</value>
+  </data>
+  <data name="SwitchToTileView" xml:space="preserve">
+    <value>Переключить на плитки</value>
+  </data>
+  <data name="SwitchToListView" xml:space="preserve">
+    <value>Переключить на список</value>
+  </data>
+  <data name="DownloadingGameList" xml:space="preserve">
+    <value>Загрузка списка игр...</value>
+  </data>
+  <data name="CheckingOwnership" xml:space="preserve">
+    <value>Проверка владения играми...</value>
+  </data>
+  <data name="CheckingOwnershipPercent" xml:space="preserve">
+    <value>Проверка владения играми... {0}%</value>
+  </data>
+  <data name="ScanningLocalGames" xml:space="preserve">
+    <value>Сканирование локальной библиотеки Steam...</value>
+  </data>
+  <data name="ScanningProtected" xml:space="preserve">
+    <value>Сканирование защищённых достижений...</value>
+  </data>
+  <data name="DisplayingGames" xml:space="preserve">
+    <value>Показано {0} {2}. Всего {1} {3}.</value>
+  </data>
+  <data name="DownloadingIcons" xml:space="preserve">
+    <value>Загрузка {0} {1} игр...</value>
+  </data>
+  <data name="DownloadCancelled" xml:space="preserve">
+    <value>Загрузка списка игр была отменена.</value>
+  </data>
+  <data name="ColGame" xml:space="preserve">
+    <value>Игра</value>
+  </data>
+  <data name="ColAppId" xml:space="preserve">
+    <value>AppId</value>
+  </data>
+  <data name="ColType" xml:space="preserve">
+    <value>Тип</value>
+  </data>
+  <data name="ColHours" xml:space="preserve">
+    <value>Часы</value>
+  </data>
+  <data name="ColLastPlayed" xml:space="preserve">
+    <value>Последний запуск</value>
+  </data>
+  <data name="ColAchievements" xml:space="preserve">
+    <value>Достижения</value>
+  </data>
+  <data name="NoGamesSelected" xml:space="preserve">
+    <value>Нет выбранных игр.</value>
+  </data>
+  <data name="FailedToStartSAMGame" xml:space="preserve">
+    <value>Не удалось запустить SAM.Game.exe.</value>
+  </data>
+  <data name="NoGamesToProcess" xml:space="preserve">
+    <value>Нет игр для обработки.</value>
+  </data>
+  <data name="EnterValidGameId" xml:space="preserve">
+    <value>Введите корректный ID игры.</value>
+  </data>
+  <data name="DontOwnGame" xml:space="preserve">
+    <value>Вы не владеете этой игрой.</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Информация</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Информация</value>
+  </data>
+  <data name="MaxGamesWarning" xml:space="preserve">
+    <value>Максимум 32 игры можно выбрать для idle.</value>
+  </data>
+  <data name="LimitReached" xml:space="preserve">
+    <value>Достигнут предел</value>
+  </data>
+  <data name="UnlockAllConfirm" xml:space="preserve">
+    <value>Это разблокирует ВСЕ достижения для {0} отображаемых {1}.
+
+Каждая игра будет обработана последовательно. Это может занять время.
+
+Вы уверены, что хотите продолжить?</value>
+  </data>
+  <data name="UnlockAllTitle" xml:space="preserve">
+    <value>Разблокировать все игры</value>
+  </data>
+  <data name="BatchComplete" xml:space="preserve">
+    <value>Массовая разблокировка завершена!
+
+Успешно: {0}
+Неудачно: {1}</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>Результаты</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>Обработка {0}/{1}: {2}...</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Язык:</value>
+  </data>
+  <data name="ViewMode" xml:space="preserve">
+    <value>Режим отображения:</value>
+  </data>
+  <data name="ListMode" xml:space="preserve">
+    <value>Список</value>
+  </data>
+  <data name="TilesMode" xml:space="preserve">
+    <value>Плитки</value>
+  </data>
+  <data name="SteamApiKey" xml:space="preserve">
+    <value>Steam Web API ключ (опционально):</value>
+  </data>
+  <data name="SteamApiKeyHint" xml:space="preserve">
+    <value>✨ Что даёт API ключ:
+• Все игры — находит даже удалённые игры из библиотеки
+• Достижения — показывает сколько открыто в каждой игре
+• Профиль — аватар, ник, уровень Steam, статус онлайн
+• VAC защита — предупреждает перед разблокировкой в VAC-играх
+
+Ключ бесплатный и хранится в программе до переустановки.
+Получите ключ на:</value>
+  </data>
+  <data name="FetchingFromApi" xml:space="preserve">
+    <value>Загрузка списка игр из Steam API...</value>
+  </data>
+  <data name="ApiGamesFound" xml:space="preserve">
+    <value>Найдено {0} дополнительных {1} через Steam API.</value>
+  </data>
+  <data name="LoadingAchievements" xml:space="preserve">
+    <value>Загрузка достижений... {0}/{1}</value>
+  </data>
+  <data name="AchievementsLoaded" xml:space="preserve">
+    <value>Достижения загружены для {0} {1}.</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="TestApi" xml:space="preserve">
+    <value>Тест</value>
+  </data>
+  <data name="ApiKeyEmpty" xml:space="preserve">
+    <value>Сначала введите API ключ.</value>
+  </data>
+  <data name="ApiKeyValid" xml:space="preserve">
+    <value>API ключ работает! ✅</value>
+  </data>
+  <data name="ApiKeyInvalid" xml:space="preserve">
+    <value>API ключ недействителен или запрос не удался. ❌
+Проверьте ключ и попробуйте снова.</value>
+  </data>
+  <data name="IdleSettings" xml:space="preserve">
+    <value>Настройки Idle</value>
+  </data>
+  <data name="IdleModeLabel" xml:space="preserve">
+    <value>Режим Idle:</value>
+  </data>
+  <data name="IdleHours" xml:space="preserve">
+    <value>Часы idle:</value>
+  </data>
+  <data name="HoursPerGame" xml:space="preserve">
+    <value>Часов на игру:</value>
+  </data>
+  <data name="TargetHoursPerBatch" xml:space="preserve">
+    <value>Целевые часы на группу:</value>
+  </data>
+  <data name="IdleHoursPerSession" xml:space="preserve">
+    <value>Часы idle (за сессию):</value>
+  </data>
+  <data name="TotalIdleTime" xml:space="preserve">
+    <value>Общее время idle:</value>
+  </data>
+  <data name="Indefinite" xml:space="preserve">
+    <value>Бессрочно (до остановки)</value>
+  </data>
+  <data name="MaxSimultaneous" xml:space="preserve">
+    <value>Макс. одновременных игр:</value>
+  </data>
+  <data name="RotationInterval" xml:space="preserve">
+    <value>Интервал ротации (мин.):</value>
+  </data>
+  <data name="RestartEvery" xml:space="preserve">
+    <value>Перезапуск каждые (мин.):</value>
+  </data>
+  <data name="StartHHMM" xml:space="preserve">
+    <value>Начало (ЧЧ:ММ):</value>
+  </data>
+  <data name="EndHHMM" xml:space="preserve">
+    <value>Конец (ЧЧ:ММ):</value>
+  </data>
+  <data name="AvailableGames" xml:space="preserve">
+    <value>Доступно игр: {0}. Steam поддерживает до 32 игр одновременно.</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>▶  Старт</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="ModeName0" xml:space="preserve">
+    <value>Простой — Параллельный</value>
+  </data>
+  <data name="ModeName1" xml:space="preserve">
+    <value>Последовательный — По одному</value>
+  </data>
+  <data name="ModeName2" xml:space="preserve">
+    <value>Ротация — По кругу</value>
+  </data>
+  <data name="ModeName3" xml:space="preserve">
+    <value>Целевые часы — До цели</value>
+  </data>
+  <data name="ModeName4" xml:space="preserve">
+    <value>Расписание — Временное окно</value>
+  </data>
+  <data name="ModeName5" xml:space="preserve">
+    <value>Анти-Idle — Обход обнаружения</value>
+  </data>
+  <data name="ModeDesc0" xml:space="preserve">
+    <value>Запуск нескольких игр параллельно на заданное время.
+Steam считает часы для всех одновременно (до 32 игр).
+Самый простой режим для быстрого накопления часов.</value>
+  </data>
+  <data name="ModeDesc1" xml:space="preserve">
+    <value>Игры запускаются строго по одной.
+Каждая работает указанное время, затем автоматически
+переключается на следующую игру в списке.</value>
+  </data>
+  <data name="ModeDesc2" xml:space="preserve">
+    <value>Циклическая ротация группами.
+Группа игр запускается, через заданный интервал
+переключается на следующую, циклично проходя все.
+Идеально для прокрутки сотен игр за одну сессию.</value>
+  </data>
+  <data name="ModeDesc3" xml:space="preserve">
+    <value>Накопление целевых часов группами (до 32 игр за раз).
+Когда текущая группа достигает целевого времени,
+автоматически запускается следующая группа.
+Продолжается пока все игры не достигнут целевых часов.</value>
+  </data>
+  <data name="ModeDesc4" xml:space="preserve">
+    <value>Idle только в указанном временном окне.
+Игры автоматически запускаются и останавливаются по расписанию
+(например, только ночью с 23:00 до 07:00).</value>
+  </data>
+  <data name="ModeDesc5" xml:space="preserve">
+    <value>Периодический перезапуск процессов для обхода обнаружения.
+Каждые N минут все процессы убиваются и
+перезапускаются, имитируя естественное поведение.</value>
+  </data>
+  <data name="DetailedInfo0" xml:space="preserve">
+    <value>🎮 Простой — Параллельный idle
+
+Самый простой режим. Запускает выбранное количество игр
+одновременно. Steam видит их как запущенные и накапливает
+игровое время для каждой из них.
+
+• Максимум 32 игры одновременно (ограничение Steam)
+• Установите лимит времени или запустите бессрочно
+• Все игры запускаются и останавливаются вместе
+
+Рекомендуется для быстрого накопления часов в нескольких играх.</value>
+  </data>
+  <data name="DetailedInfo1" xml:space="preserve">
+    <value>📋 Последовательный — По одному
+
+Запускает игры строго по одной. Когда одна игра
+проработала указанное время, она закрывается и
+автоматически запускается следующая из списка.
+
+• Одна игра за раз
+• Установите часы на игру
+• Обрабатывает весь список отображаемых игр
+
+Рекомендуется когда нужно накопить много часов
+в конкретных играх последовательно.</value>
+  </data>
+  <data name="DetailedInfo2" xml:space="preserve">
+    <value>🔄 Ротация — По кругу
+
+Циклическая ротация группами. Первая группа игр
+(до 32) запускается, через заданный интервал останавливается
+и запускается следующая. Когда все группы пройдены,
+цикл начинается заново.
+
+• Интервал ротации настраивается (5-1440 мин)
+• Каждая группа — до 32 игр
+• Работает бессрочно или заданное время
+
+Идеально для прокрутки сотен игр за одну сессию,
+распределяя часы равномерно.</value>
+  </data>
+  <data name="DetailedInfo3" xml:space="preserve">
+    <value>🎯 Целевые часы — До цели
+
+Запускает группу игр (до 32 одновременно) и работает
+указанное количество часов. Когда время истекает,
+текущая группа останавливается и запускается следующая.
+Продолжается пока все игры не достигнут целевых часов.
+
+• Группы по N игр (настраивается, максимум 32)
+• Автоматическое переключение групп
+• Однопроходный: каждая игра обрабатывается один раз
+
+Рекомендуется для массового накопления часов во всех играх.</value>
+  </data>
+  <data name="DetailedInfo4" xml:space="preserve">
+    <value>🕐 Расписание — Временное окно
+
+Idle работает только в указанном временном окне.
+Вне расписания процессы автоматически приостанавливаются,
+и возобновляются когда окно начинается.
+
+• Установите время начала и окончания (ЧЧ:ММ)
+• Поддержка ночных окон (например, 23:00 — 07:00)
+• Количество игр и часы настраиваются
+
+Рекомендуется для автономного idle (ночью, когда вас нет за ПК).</value>
+  </data>
+  <data name="DetailedInfo5" xml:space="preserve">
+    <value>🛡 Анти-Idle — Обход обнаружения
+
+Периодический перезапуск всех процессов.
+Каждые N минут все idle-процессы убиваются
+и перезапускаются. Это имитирует естественное поведение
+(запуск/выход из игр).
+
+• Интервал перезапуска настраивается (10-1440 мин)
+• Работает бессрочно или заданное время
+• Создает более естественный паттерн активности
+
+Рекомендуется для длительных idle-сессий (12+ часов).</value>
+  </data>
+  <data name="ActiveGamesManager" xml:space="preserve">
+    <value>Менеджер активных игр</value>
+  </data>
+  <data name="StopAll" xml:space="preserve">
+    <value>⏹ Остановить все</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="StatusWaiting" xml:space="preserve">
+    <value>⏳ Ожидание</value>
+  </data>
+  <data name="StatusRunning" xml:space="preserve">
+    <value>▶ Запущен</value>
+  </data>
+  <data name="StatusPaused" xml:space="preserve">
+    <value>⏸ Пауза</value>
+  </data>
+  <data name="StatusStopped" xml:space="preserve">
+    <value>⏹ Остановлен</value>
+  </data>
+  <data name="StatusFailed" xml:space="preserve">
+    <value>✖ Ошибка</value>
+  </data>
+  <data name="StatusExited" xml:space="preserve">
+    <value>✖ Завершен</value>
+  </data>
+  <data name="ActionPauseStop" xml:space="preserve">
+    <value>⏸ Пауза  |  ⏹ Стоп</value>
+  </data>
+  <data name="ActionResumeStop" xml:space="preserve">
+    <value>▶ Возобновить  |  ⏹ Стоп</value>
+  </data>
+  <data name="ConfirmCloseMessage" xml:space="preserve">
+    <value>Некоторые игры еще запущены. Остановить все и закрыть?</value>
+  </data>
+  <data name="ConfirmClose" xml:space="preserve">
+    <value>Подтверждение закрытия</value>
+  </data>
+  <data name="IdleComplete" xml:space="preserve">
+    <value>  ✅ Idle завершен.</value>
+  </data>
+  <data name="ColStatus" xml:space="preserve">
+    <value>Статус</value>
+  </data>
+  <data name="ColElapsed" xml:space="preserve">
+    <value>Время</value>
+  </data>
+  <data name="ColAction" xml:space="preserve">
+    <value>Действие</value>
+  </data>
+  <data name="ModeStarting" xml:space="preserve">
+    <value>  Режим: {0} — Запуск игр...</value>
+  </data>
+  <data name="LogLevel" xml:space="preserve">
+    <value>Уровень логирования:</value>
+  </data>
+  <data name="OpenLogFolder" xml:space="preserve">
+    <value>Открыть логи</value>
+  </data>
+  <data name="LogLevelDebug" xml:space="preserve">
+    <value>Отладка</value>
+  </data>
+  <data name="LogLevelInformation" xml:space="preserve">
+    <value>Информация</value>
+  </data>
+  <data name="LogLevelWarning" xml:space="preserve">
+    <value>Предупреждения</value>
+  </data>
+  <data name="LogLevelError" xml:space="preserve">
+    <value>Ошибки</value>
+  </data>
+  <data name="NoLogsYet" xml:space="preserve">
+    <value>Лог-файлов пока нет.</value>
+  </data>
+  <data name="StatusOffline" xml:space="preserve">
+    <value>Оффлайн</value>
+  </data>
+  <data name="StatusOnline" xml:space="preserve">
+    <value>В сети</value>
+  </data>
+  <data name="StatusBusy" xml:space="preserve">
+    <value>Не беспокоить</value>
+  </data>
+  <data name="StatusAway" xml:space="preserve">
+    <value>Нет на месте</value>
+  </data>
+  <data name="StatusSnooze" xml:space="preserve">
+    <value>Спит</value>
+  </data>
+  <data name="StatusLookingToTrade" xml:space="preserve">
+    <value>Хочет обмениваться</value>
+  </data>
+  <data name="StatusLookingToPlay" xml:space="preserve">
+    <value>Хочет играть</value>
+  </data>
+  <data name="ModeSimple" xml:space="preserve">
+    <value>Простой</value>
+  </data>
+  <data name="ModeSequential" xml:space="preserve">
+    <value>Последовательный</value>
+  </data>
+  <data name="ModeRoundRobin" xml:space="preserve">
+    <value>Ротация</value>
+  </data>
+  <data name="ModeTargetHours" xml:space="preserve">
+    <value>Целевые часы</value>
+  </data>
+  <data name="ModeSchedule" xml:space="preserve">
+    <value>Расписание</value>
+  </data>
+  <data name="ModeAntiIdle" xml:space="preserve">
+    <value>Анти-Idle</value>
+  </data>
+  <data name="ModeIdle" xml:space="preserve">
+    <value>Idle</value>
+  </data>
+</root>

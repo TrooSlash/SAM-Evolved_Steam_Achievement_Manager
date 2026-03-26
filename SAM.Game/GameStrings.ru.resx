@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="CommitChanges" xml:space="preserve">
+    <value>Сохранить изменения</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Обновить</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>Сброс</value>
+  </data>
+  <data name="Achievements" xml:space="preserve">
+    <value>Достижения</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>Статистика</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Название</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Описание</value>
+  </data>
+  <data name="UnlockTime" xml:space="preserve">
+    <value>Время разблокировки</value>
+  </data>
+  <data name="GlobalPercent" xml:space="preserve">
+    <value>Глобальный %</value>
+  </data>
+  <data name="ShowOnly" xml:space="preserve">
+    <value>Показать только</value>
+  </data>
+  <data name="Locked" xml:space="preserve">
+    <value>закрытые</value>
+  </data>
+  <data name="Unlocked" xml:space="preserve">
+    <value>открытые</value>
+  </data>
+  <data name="HideProtected" xml:space="preserve">
+    <value>скрыть защищённые</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Фильтр</value>
+  </data>
+  <data name="LockAll" xml:space="preserve">
+    <value>Закрыть все</value>
+  </data>
+  <data name="InvertAll" xml:space="preserve">
+    <value>Инвертировать все</value>
+  </data>
+  <data name="UnlockAll" xml:space="preserve">
+    <value>Открыть все</value>
+  </data>
+  <data name="DownloadStatus" xml:space="preserve">
+    <value>Статус загрузки</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>Значение</value>
+  </data>
+  <data name="Extra" xml:space="preserve">
+    <value>Дополнительно</value>
+  </data>
+  <data name="DownloadingIcons" xml:space="preserve">
+    <value>Загрузка {0} {1}...</value>
+  </data>
+  <data name="ErrorRetrievingStats" xml:space="preserve">
+    <value>Ошибка при получении статистики: {0}</value>
+  </data>
+  <data name="FailedLoadSchema" xml:space="preserve">
+    <value>Не удалось загрузить схему.</value>
+  </data>
+  <data name="ErrorAchievementsRetrieval" xml:space="preserve">
+    <value>Ошибка при получении достижений.</value>
+  </data>
+  <data name="ErrorStatsRetrieval" xml:space="preserve">
+    <value>Ошибка при получении статистики.</value>
+  </data>
+  <data name="RetrievedStats" xml:space="preserve">
+    <value>Получено {0} {2} и {1} {3}.</value>
+  </data>
+  <data name="RetrievingStats" xml:space="preserve">
+    <value>Получение статистики...</value>
+  </data>
+  <data name="ErrorSettingState" xml:space="preserve">
+    <value>Ошибка при установке состояния для {0}, сохранение прервано.</value>
+  </data>
+  <data name="ErrorSettingValue" xml:space="preserve">
+    <value>Ошибка при установке значения для {0}, сохранение прервано.</value>
+  </data>
+  <data name="ErrorStoring" xml:space="preserve">
+    <value>Ошибка при сохранении, операция прервана.</value>
+  </data>
+  <data name="StoredStats" xml:space="preserve">
+    <value>Сохранено {0} {2} и {1} {3}.</value>
+  </data>
+  <data name="ConfirmResetStats" xml:space="preserve">
+    <value>Вы уверены, что хотите сбросить статистику?</value>
+  </data>
+  <data name="ConfirmResetAchievements" xml:space="preserve">
+    <value>Сбросить достижения тоже?</value>
+  </data>
+  <data name="ReallyReallySure" xml:space="preserve">
+    <value>Вы точно уверены?</value>
+  </data>
+  <data name="ProtectedAchievement" xml:space="preserve">
+    <value>Это защищённое достижение, им нельзя управлять через SAM.</value>
+  </data>
+  <data name="ProtectedAchievements" xml:space="preserve">
+    <value>защищённых</value>
+  </data>
+  <data name="ProtectedTooltip" xml:space="preserve">
+    <value>⚠ Защищённое — серверное достижение, нельзя изменить локально</value>
+  </data>
+  <data name="AllProtectedWarning" xml:space="preserve">
+    <value>Все достижения в этой игре имеют серверную валидацию и не могут быть изменены через SAM.
+
+Игра использует серверную проверку достижений — изменения будут отклонены серверами Steam.</value>
+  </data>
+  <data name="StatProtected" xml:space="preserve">
+    <value>Статистика защищена — изменение невозможно</value>
+  </data>
+  <data name="InvalidValue" xml:space="preserve">
+    <value>Недопустимое значение</value>
+  </data>
+  <data name="StatsEditingAgreement" xml:space="preserve">
+    <value>Я понимаю, что изменяя значения статистик, я могу всё испортить и виноват буду только сам.</value>
+  </data>
+  <data name="GenericError" xml:space="preserve">
+    <value>Общая ошибка — обычно означает, что игра не куплена</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Предупреждение</value>
+  </data>
+  <data name="Question" xml:space="preserve">
+    <value>Вопрос</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Информация</value>
+  </data>
+  <data name="VacDetected" xml:space="preserve">
+    <value>VAC / Античит защита</value>
+  </data>
+  <data name="VacWarningText" xml:space="preserve">
+    <value>⚠ VAC / Античит защита — Изменение достижений или статистики этой игры может привести к VAC-бану или ограничениям аккаунта.</value>
+  </data>
+  <data name="VacBlockedEdit" xml:space="preserve">
+    <value>Эта игра использует VAC / античит защиту.
+Изменение достижений и статистики заблокировано для защиты вашего аккаунта.
+
+Нажмите «Я принимаю риски» чтобы разблокировать на свой страх и риск.</value>
+  </data>
+  <data name="VacStoreWarning" xml:space="preserve">
+    <value>Эта игра использует VAC / античит защиту!
+
+Сохранение изменений может привести к:
+• VAC-бану (перманентный)
+• Бану в игре
+• Ограничению онлайн-функций
+
+Вы абсолютно уверены, что хотите продолжить?</value>
+  </data>
+  <data name="VacOverrideConfirm" xml:space="preserve">
+    <value>ВНИМАНИЕ: Вы собираетесь включить редактирование для VAC-защищённой игры.
+
+Это может привести к:
+• Перманентному VAC-бану аккаунта
+• Потере доступа к онлайн-мультиплееру
+• Банам в конкретных играх
+
+Разработчики НЕ несут ответственности за последствия.
+
+Продолжить?</value>
+  </data>
+  <data name="VacOverrideDone" xml:space="preserve">
+    <value>Разблокировано</value>
+  </data>
+  <data name="VacOverrideBtn" xml:space="preserve">
+    <value>Я принимаю риски</value>
+  </data>
+  <data name="VacWarningOverridden" xml:space="preserve">
+    <value>⚠ VAC-защита обойдена — Вы редактируете на свой страх и риск. Вся ответственность лежит на вас.</value>
+  </data>
+  <data name="VacUnlockAllWarning" xml:space="preserve">
+    <value>Эта игра использует VAC / античит защиту!
+
+Разблокировка всех достижений может привести к:
+• Перманентному VAC-бану
+• Бану в игре
+• Потере онлайн-функций
+
+Да — Разблокировать все (на свой риск)
+Нет — Отмена
+
+Разблокировать все достижения?</value>
+  </data>
+  <data name="VacActionWarning" xml:space="preserve">
+    <value>Эта игра использует VAC / античит защиту.
+Изменение достижений или статистики может привести к бану.
+
+Вы уверены, что хотите продолжить?</value>
+  </data>
+  <data name="VacClickWarning" xml:space="preserve">
+    <value>Эта игра использует VAC / античит защиту.
+
+Изменение достижений может привести к VAC-бану или ограничениям аккаунта.
+Это предупреждение появится только один раз за сессию.
+
+Хотите редактировать достижения этой игры?</value>
+  </data>
+  <data name="LockAllConfirm" xml:space="preserve">
+    <value>Вы уверены, что хотите заблокировать все достижения?
+Это снимет отметку со всех достижений в списке.</value>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>Подтверждение</value>
+  </data>
+</root>

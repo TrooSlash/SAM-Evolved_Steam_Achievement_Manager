@@ -4,6 +4,26 @@ All notable changes to SAM Evolved are documented in this file.
 
 ---
 
+## [1.3.0] — 2026-03-26
+
+### Added
+- **Double-click achievement toggle** in the achievement editor (S8.1)
+- **Pluralization support** for EN and RU with language-aware `Plural()` method — correct forms for counts (S8.2)
+- **Filter chip buttons** in the game picker toolbar — replaced dropdown with toggle ToolStripButtons for Games/Demos/Mods/Junk (S9.1)
+- **Drag-and-drop reorder** in the Active Games Manager list (S9.2)
+- **Text VDF parser** in shared `KeyValue` class — `LoadAsText()`/`ParseText()` with quoted strings, nested blocks, escape chars, `//` comments (S10.1)
+- 25 new unit tests for pluralization (Russian/English forms, teens, edge cases)
+
+### Changed
+- **PlaytimeReader** rewritten to use shared `KeyValue.ParseText()` — replaced ~120 lines of manual char-by-char VDF parsing with structured tree navigation (S10.1)
+- **Localization moved to .resx** resource files — `Strings.resx`/`GameStrings.resx` with `ru` satellite assemblies replace hardcoded dictionaries (S10.2)
+- `KeyValue.cs`, `KeyValueType.cs`, `StreamHelpers.cs` compile-linked into SAM.Picker via `<Compile Link>` for code reuse
+- All count-based UI strings now use pluralized forms (10 call sites updated)
+- Filter labels shortened: "Show Games" → "Games", etc.
+- Total tests: 81 (was 56)
+
+---
+
 ## [1.2.0] — 2026-03-26
 
 ### Added
