@@ -184,7 +184,8 @@ namespace SAM.API
                     try
                     {
                         var callbackId = message.Id;
-                        foreach (ICallback callback in this._Callbacks.Where(
+                        var snapshot = this._Callbacks.ToArray();
+                        foreach (ICallback callback in snapshot.Where(
                             candidate => candidate.Id == callbackId &&
                                          candidate.IsServer == server))
                         {

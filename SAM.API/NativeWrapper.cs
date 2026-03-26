@@ -21,7 +21,7 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
 namespace SAM.API
@@ -49,16 +49,12 @@ namespace SAM.API
                 typeof(TNativeFunctions));
         }
 
-        private readonly Dictionary<IntPtr, Delegate> _FunctionCache = new();
+        private readonly ConcurrentDictionary<IntPtr, Delegate> _FunctionCache = new();
 
         protected Delegate GetDelegate<TDelegate>(IntPtr pointer)
         {
-            if (this._FunctionCache.TryGetValue(pointer, out var function) == false)
-            {
-                function = Marshal.GetDelegateForFunctionPointer(pointer, typeof(TDelegate));
-                this._FunctionCache[pointer] = function;
-            }
-            return function;
+            return this._FunctionCache.GetOrAdd(pointer,
+                p => Marshal.GetDelegateForFunctionPointer(p, typeof(TDelegate)));
         }
 
         protected TDelegate GetFunction<TDelegate>(IntPtr pointer)
