@@ -37,7 +37,7 @@ All notable changes to SAM Evolved are documented in this file.
 
 ---
 
-## [1.1.1] — 2026-03-25
+## [1.1.1] — 2026-03-24
 
 ### Added
 - **Protected achievements auto-detection** by scanning Steam's local schema files (`UserGameStatsSchema_*.bin`)
@@ -57,7 +57,7 @@ All notable changes to SAM Evolved are documented in this file.
 
 ---
 
-## [1.1.0] — 2026-03-24
+## [1.1.0] — 2026-03-22
 
 ### Added
 - **File-based logging** (Serilog) with daily rotation, 10 MB limit, 7-day retention
